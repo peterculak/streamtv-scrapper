@@ -10,7 +10,7 @@ class Extractor implements ExtractorServiceInterface {
 
     extract(): Promise<Array<{title: string, img: string, url: string}>> {
         return FileSystem.readFile(`${this.cacheDir}/archiv.html`)
-            .then((content: string) => this.extractArchive(content));
+            .then((file: {content: string, name: string}) => this.extractArchive(file.content));
     }
 
     public extractArchive(content: string): Array<{title: string, img: string, url: string}> {
@@ -44,6 +44,27 @@ class Extractor implements ExtractorServiceInterface {
         });
 
         return meta;
+    }
+
+    public static episodesList(content: string): Array<{title: string, url: string, img: string, date: string, episode: number}> {
+        const $ = cheerio.load(content);
+        const row = $('.e-mobile-article-p').html();
+
+        const episodes: Array<{title: string, url: string, img: string, date: string, episode: number}> = [];
+        $('article', row).each((i: number, elem: any) => {
+            const a = $('a', elem);
+            const subtitle = $('h4.subtitle', elem);
+
+            episodes.push({
+                title: a.attr('title'),
+                url: a.attr('href'),
+                img: $('img', a).attr('data-original'),
+                date: $('span.date', subtitle).first().html(),
+                episode: parseInt($('span.date', subtitle).last().html().split(':')[1]),
+            });
+        });
+
+        return episodes;
     }
 }
 

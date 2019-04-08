@@ -48,7 +48,6 @@ if (program.site === 'joj') {
         const episodes = container.get<EpisodesServiceInterface>(CONSTANTS.JOJ_EPISODES);
         series.cacheProgramSeriesIndexPages(program.programUrl)
             .then((seriesIndexPages: Array<string>) => episodes.cacheSeriesEpisodes(seriesIndexPages))
-            .then((r: string) => console.log(r))
             .catch((err: Error) => console.log(chalk.red(err)));
     }
 }
