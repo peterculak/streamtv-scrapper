@@ -13,8 +13,8 @@ class Extractor implements ExtractorServiceInterface {
             .then((content: string) => this.extractArchive(content));
     }
 
-    public extractArchive(data: string): Array<{title: string, img: string, url: string}> {
-        const $ = cheerio.load(data);
+    public extractArchive(content: string): Array<{title: string, img: string, url: string}> {
+        const $ = cheerio.load(content);
         const archive: Array<{title: string, img: string, url: string}> = [];
 
         $('div.b-i-archive-list > div.row').each(function (i: number, elem: any) {
@@ -26,6 +26,24 @@ class Extractor implements ExtractorServiceInterface {
         });
 
         return archive;
+    }
+
+    public static seriesArchiveUrl(content: string): string {
+        const $ = cheerio.load(content);
+        const row = $('.e-subnav-wrap').html();
+        const a = $('a[title*="Arch"]', row);
+        return a.length ? a.attr('href'): '';
+    }
+
+    public static seriesPagesMetaData(content: string): Array<{ id: string, title: string }> {
+        const $ = cheerio.load(content);
+        const row = $('.e-subnav-wrap').html();
+        const meta: Array<{ id: string, title: string }> = [];
+        $('div.e-select > select > option', row).each((i: number, elem: any) => {
+            meta.push({id: $(elem).val(), title: $(elem).text().trim()});
+        });
+
+        return meta;
     }
 }
 
