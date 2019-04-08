@@ -1,32 +1,21 @@
 import {injectable} from "inversify";
 import "reflect-metadata";
-const fs = require('fs');
 const cheerio = require('cheerio');
-const chalk = require('chalk');
 import ExtractorServiceInterface from "./ExtractorServiceInterface";
+import FileSystem from "../FileSystem";
 
 @injectable()
 class Extractor implements ExtractorServiceInterface {
     private readonly cacheDir: string = './var/cache/joj.sk';
-    private readonly archiveHtmlFile: string = `${this.cacheDir}/archiv.html`;
 
-    extract(): Promise<any> {
-        return new Promise((resolve, reject) => {
-            fs.readFile(this.archiveHtmlFile, (err: Error, data: Object) => {
-                if (err) {
-                    console.log(chalk.red(err));
-                    reject(err);
-                } else {
-                    console.log(`Extracting programmes from ${this.archiveHtmlFile}`);
-                    resolve(this.extractArchive(data));
-                }
-            })
-        });
+    extract(): Promise<Array<{title: string, img: string, url: string}>> {
+        return FileSystem.readFile(`${this.cacheDir}/archiv.html`)
+            .then((content: string) => this.extractArchive(content));
     }
 
-    public extractArchive(data: Object): Array<{}> {
-        const $ = cheerio.load(data.toString());
-        const archive: Array<{}> = [];
+    public extractArchive(data: string): Array<{title: string, img: string, url: string}> {
+        const $ = cheerio.load(data);
+        const archive: Array<{title: string, img: string, url: string}> = [];
 
         $('div.b-i-archive-list > div.row').each(function (i: number, elem: any) {
             archive.push({

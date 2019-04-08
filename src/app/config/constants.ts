@@ -1,6 +1,7 @@
 const CONSTANTS = {
     JOJ_ARCHIVE: Symbol.for("JojArchive"),
-    JOJ_EPIZODES: Symbol.for("JojEpizodes"),
+    JOJ_SERIES: Symbol.for("JojSeries"),
+    JOJ_EPISODES: Symbol.for("JojEpisodes"),
     JOJ_EXTRACTOR: Symbol.for("JojExtractor"),
 };
 
