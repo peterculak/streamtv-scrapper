@@ -38,7 +38,7 @@ if (program.site === 'joj') {
 
         archive.cacheArchiveList()
             .then(() => extractor.extract())
-            .then((archive: Array<{}>) => console.log(archive))
+            .then((archive: Array<{}>) => console.log(chalk.green(`Archive contains ${archive.length} items`)))
             .catch((err: Error) => console.log(chalk.red(err)))
         ;
 

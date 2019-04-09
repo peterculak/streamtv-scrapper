@@ -25,13 +25,25 @@ class EpisodesService implements EpisodesServiceInterface {
         });
     }
 
-    private cacheEpisodePages(seriesDir: string, episodePages: Array<{ url: string, title: string }>): Promise<Array<string>> {
+    private cacheEpisodePages(seriesDir: string, episodePages: Array<{ url: string, title: string, episode: number, date: string }>): Promise<Array<string>> {
         return Promise.all(
-            episodePages.map((episode: { url: string, title: string }) => {
+            episodePages.map((episode: { url: string, title: string, date: string, episode: number }) => {
                     console.log(`Fetching ${episode.url}`);
                     return fetch(episode.url)
                         .then((r: any) => r.text())
-                        .then((content: string) => FileSystem.writeFile(seriesDir, `${episode.title}.html`, content))
+                        .then((content: string) => {//this caches page which contains url to video iframe
+                            FileSystem.writeFile(seriesDir, `${episode.episode}-${episode.title}.html`, content);
+                            return content;
+                        })
+                        .then((content: string) => {//this caches final iframes which contain video urls
+                            const iframeUrl = Extractor.episodeIframeUrl(content);
+                            console.log(`Fetching ${iframeUrl}`);
+
+                            return fetch(iframeUrl)
+                                .then((r: any) => r.text())
+                                .then((content: string) => FileSystem.writeFile(`${seriesDir}/iframes`, `${episode.episode}-${episode.title}.html`, content))
+                            ;
+                        })
                 }
             )
         ).then((r: Array<{ content: string, file: string }>) => r.map((item: { content: string, file: string }) => item.file));

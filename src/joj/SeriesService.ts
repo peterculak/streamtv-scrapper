@@ -5,6 +5,7 @@ const fetch = require('node-fetch');
 import SeriesServiceInterface from "./SeriesServiceInterface";
 import FileSystem from "../FileSystem";
 import Extractor from "./Extractor";
+const cheerio = require('cheerio');
 
 @injectable()
 class SeriesService implements SeriesServiceInterface {
@@ -21,7 +22,7 @@ class SeriesService implements SeriesServiceInterface {
             .then((r: any) => r.text())
             .then((body: string) => FileSystem.writeFile(programDir, 'index.html', body))
             .then((r: { content: string, file: string }) => this.getSeriesPagesMeta(r.content))
-            .then((seriesPagesMeta: Array<{ url: string, title: string }>) => this.cacheSeriesPages(programDir, seriesPagesMeta));
+            .then((seriesPagesMeta: Array<{ seriesUrl: string, url: string, title: string }>) => this.cacheSeriesPages(programDir, seriesPagesMeta));
     }
 
     private getSeriesPagesMeta(indexPageContent: string): Promise<Array<{ url: string, title: string }>> {
@@ -36,17 +37,38 @@ class SeriesService implements SeriesServiceInterface {
                     return {
                         title: elem.title,
                         url: elem.id ? `${seriesUrl}?seasonId=${elem.id}` : seriesUrl,
+                        seriesUrl: seriesUrl,
                     };
                 });
             });
     }
 
-    private cacheSeriesPages(programDir: string, seriesPages: Array<{ url: string, title: string }>): Promise<Array<string>> {
+    private cacheSeriesPages(programDir: string, seriesPages: Array<{ seriesUrl: string, url: string, title: string }>): Promise<Array<string>> {
         return Promise.all(
-            seriesPages.map((series: { url: string, title: string }) => {
+            seriesPages.map((series: { seriesUrl: string, url: string, title: string }) => {
                     console.log(`Fetching ${series.url}`);
                     return fetch(series.url)
                         .then((r: any) => r.text())
+                        .then((content: string) => {//todo recursion
+                            const loadMoreEpisodesLink = Extractor.loadMoreEpisodesLink(content);
+                            if (loadMoreEpisodesLink.length) {
+                                //create load more link
+                                const u = series.seriesUrl.split('/');
+                                u.pop();
+                                const loadMore = u.join('/') + loadMoreEpisodesLink.attr('href');
+                                return fetch(loadMore)
+                                    .then((r: any) => r.text())
+                                    .then((nextContent: string) => {//todo clean this
+                                        const $ = cheerio.load(content);
+                                        const next = cheerio.load(nextContent);
+                                        const nextEpisodes = next('.row.scroll-item');
+                                        $('a[title="Načítaj viac"]').parent().replaceWith(nextEpisodes.html());
+                                        return $.html();
+                                    });
+                            }
+
+                            return content;
+                        })
                         .then((content: string) => FileSystem.writeFile(`${programDir}/series`, `${series.title}.html`, content))
                 }
             )

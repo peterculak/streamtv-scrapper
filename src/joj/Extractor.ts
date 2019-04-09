@@ -66,6 +66,16 @@ class Extractor implements ExtractorServiceInterface {
 
         return episodes;
     }
+
+    public static loadMoreEpisodesLink(content: string): any {
+        const $ = cheerio.load(content);
+        return $('a[title="Načítaj viac"]');
+    }
+
+    public static episodeIframeUrl(content: string): string {
+        const $ = cheerio.load(content);
+        return $('section.s-video-detail iframe').first().attr('src');
+    }
 }
 
 export default Extractor;
