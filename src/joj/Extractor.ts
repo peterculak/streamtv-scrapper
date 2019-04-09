@@ -74,7 +74,18 @@ class Extractor implements ExtractorServiceInterface {
 
     public static episodeIframeUrl(content: string): string {
         const $ = cheerio.load(content);
-        return $('section.s-video-detail iframe').first().attr('src');
+        const iframes = $('section.s-video-detail iframe').first();
+        let url = '';
+        if (iframes) {
+            iframes.each((i: number, item: any) => {
+                const el = $(item);
+                if (el.attr('src').indexOf('media.joj.sk') !== -1) {
+                    url = el.attr('src');
+                }
+            })
+        }
+
+        return url;
     }
 }
 

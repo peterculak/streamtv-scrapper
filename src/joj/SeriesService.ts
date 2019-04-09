@@ -27,13 +27,20 @@ class SeriesService implements SeriesServiceInterface {
 
     private getSeriesPagesMeta(indexPageContent: string): Promise<Array<{ url: string, title: string }>> {
         let seriesUrl: string;
-        return fetch(Extractor.seriesArchiveUrl(indexPageContent))
+        const seriesArchiveUrl = Extractor.seriesArchiveUrl(indexPageContent);
+        return fetch(seriesArchiveUrl)
             .then((r: any) => {
                 seriesUrl = r.url;
                 return r.text();
             })
             .then((content: string) => {
-                return Extractor.seriesPagesMetaData(content).map((elem: {id: string, title: string}) => {
+                const meta = Extractor.seriesPagesMetaData(content);
+                if (!meta.length) {
+                    const season = new Date().getFullYear().toString();
+                    return [{title: season, url: seriesArchiveUrl, seriesUrl: seriesUrl}];
+                }
+
+                return meta.map((elem: {id: string, title: string}) => {
                     return {
                         title: elem.title,
                         url: elem.id ? `${seriesUrl}?seasonId=${elem.id}` : seriesUrl,

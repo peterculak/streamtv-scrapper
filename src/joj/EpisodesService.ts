@@ -1,7 +1,7 @@
 import {injectable} from "inversify";
 import "reflect-metadata";
 const fetch = require('node-fetch');
-
+const chalk = require('chalk');
 import EpisodesServiceInterface from "./EpisodesServiceInterface";
 import FileSystem from "../FileSystem";
 import Extractor from "./Extractor";
@@ -37,12 +37,16 @@ class EpisodesService implements EpisodesServiceInterface {
                         })
                         .then((content: string) => {//this caches final iframes which contain video urls
                             const iframeUrl = Extractor.episodeIframeUrl(content);
-                            console.log(`Fetching ${iframeUrl}`);
-
-                            return fetch(iframeUrl)
-                                .then((r: any) => r.text())
-                                .then((content: string) => FileSystem.writeFile(`${seriesDir}/iframes`, `${episode.episode}-${episode.title}.html`, content))
-                            ;
+                            if (!iframeUrl) {
+                                //todo this needs to return promise with something
+                                console.log(chalk.red(`No iframe url found ${episode.url}`));
+                            } else {
+                                console.log(chalk.yellow(`Fetching ${iframeUrl}`));
+                                return fetch(iframeUrl)
+                                    .then((r: any) => r.text())
+                                    .then((content: string) => FileSystem.writeFile(`${seriesDir}/iframes`, `${episode.episode}-${episode.title}.html`, content))
+                                    ;
+                            }
                         })
                 }
             )
