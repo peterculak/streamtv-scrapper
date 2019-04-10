@@ -30,8 +30,7 @@ class Extractor implements ExtractorServiceInterface {
 
     public static seriesArchiveUrl(content: string): string {
         const $ = cheerio.load(content);
-        const row = $('.e-subnav-wrap').html();
-        const a = $('a[title*="Arch"]', row);
+        const a = $('.e-subnav-wrap a[title*="Arch"]');
         return a.length ? a.attr('href'): '';
     }
 
@@ -48,10 +47,8 @@ class Extractor implements ExtractorServiceInterface {
 
     public static episodesList(content: string): Array<{title: string, url: string, img: string, date: string, episode: number}> {
         const $ = cheerio.load(content);
-        const row = $('.e-mobile-article-p').html();
-
         const episodes: Array<{title: string, url: string, img: string, date: string, episode: number}> = [];
-        $('article', row).each((i: number, elem: any) => {
+        $('.e-mobile-article-p article').each((i: number, elem: any) => {
             const a = $('a', elem);
             const subtitle = $('h4.subtitle', elem);
 
@@ -67,14 +64,28 @@ class Extractor implements ExtractorServiceInterface {
         return episodes;
     }
 
-    public static loadMoreEpisodesLink(content: string): any {
+    public static loadMoreEpisodesLink(content: string): string {
         const $ = cheerio.load(content);
-        return $('a[title="Načítaj viac"]');
+        const a = $('a[title="Načítaj viac"]');
+        return a.length ? a.attr('href') : '';
     }
 
+    public static moreEpisodes(content: string): string {
+        const $ = cheerio.load(content);
+        return $('.row.scroll-item').html();
+    }
+
+    public static appendEpisodes(content: string, moreContent: string): string {
+        const $ = cheerio.load(content);
+        $('a[title="Načítaj viac"]').parent().replaceWith(moreContent);
+
+        return $.html();
+    }
+
+    //todo this is flaky for some reason
     public static episodeIframeUrl(content: string): string {
         const $ = cheerio.load(content);
-        const iframes = $('section.s-video-detail iframe').first();
+        const iframes = $('section.s-video-detail iframe');
         let url = '';
         if (iframes) {
             iframes.each((i: number, item: any) => {

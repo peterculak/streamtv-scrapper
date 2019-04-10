@@ -28,7 +28,7 @@ class FileSystem implements FileSystemInterface {
         return new Promise((resolve, reject) => {
             fs.writeFile(cacheFile, content, (err: Error) => {
                 if (err) {
-                    console.log(chalk.red('Could not write file'));
+                    console.log(chalk.red(err));
                     reject();
                 } else {
                     console.log(chalk.green(

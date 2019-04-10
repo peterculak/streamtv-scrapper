@@ -5,13 +5,17 @@ const fetch = require('node-fetch');
 import SeriesServiceInterface from "./SeriesServiceInterface";
 import FileSystem from "../FileSystem";
 import Extractor from "./Extractor";
-const cheerio = require('cheerio');
+import chalk from "chalk";
 
 @injectable()
 class SeriesService implements SeriesServiceInterface {
     cacheProgramSeriesIndexPages(url: string): Promise<Array<string>> {
-        console.log(`Fetching ${url}`);
-        const slug = url.split('/').pop();
+        console.log(chalk.grey(`Fetching ${url}`));
+        const bits = url.split('/');
+        let slug = bits.pop();
+        if (slug === 'archiv') {
+            slug = bits.pop();
+        }
         if (!slug) {
             throw Error('Can not determine program name from url');
         }
@@ -21,13 +25,21 @@ class SeriesService implements SeriesServiceInterface {
         return fetch(url)
             .then((r: any) => r.text())
             .then((body: string) => FileSystem.writeFile(programDir, 'index.html', body))
-            .then((r: { content: string, file: string }) => this.getSeriesPagesMeta(r.content))
-            .then((seriesPagesMeta: Array<{ seriesUrl: string, url: string, title: string }>) => this.cacheSeriesPages(programDir, seriesPagesMeta));
+            .then((r: { content: string, file: string }) => {
+                let seriesArchiveUrl = Extractor.seriesArchiveUrl(r.content);
+                if (!seriesArchiveUrl) {
+                    seriesArchiveUrl = url;
+
+                }
+                return this.getSeriesPagesMeta(seriesArchiveUrl);
+            })
+            .then((seriesPagesMeta: Array<{ seriesUrl: string, url: string, title: string }>) => this.cacheSeriesPages(programDir, seriesPagesMeta))
+            ;
     }
 
-    private getSeriesPagesMeta(indexPageContent: string): Promise<Array<{ url: string, title: string }>> {
+    private getSeriesPagesMeta(seriesArchiveUrl: string): Promise<Array<{ url: string, title: string }>> {
         let seriesUrl: string;
-        const seriesArchiveUrl = Extractor.seriesArchiveUrl(indexPageContent);
+
         return fetch(seriesArchiveUrl)
             .then((r: any) => {
                 seriesUrl = r.url;
@@ -36,8 +48,7 @@ class SeriesService implements SeriesServiceInterface {
             .then((content: string) => {
                 const meta = Extractor.seriesPagesMetaData(content);
                 if (!meta.length) {
-                    const season = new Date().getFullYear().toString();
-                    return [{title: season, url: seriesArchiveUrl, seriesUrl: seriesUrl}];
+                    return [{title: '1. séria', url: seriesArchiveUrl, seriesUrl: seriesUrl}];
                 }
 
                 return meta.map((elem: {id: string, title: string}) => {
@@ -53,33 +64,49 @@ class SeriesService implements SeriesServiceInterface {
     private cacheSeriesPages(programDir: string, seriesPages: Array<{ seriesUrl: string, url: string, title: string }>): Promise<Array<string>> {
         return Promise.all(
             seriesPages.map((series: { seriesUrl: string, url: string, title: string }) => {
-                    console.log(`Fetching ${series.url}`);
+                    console.log(chalk.grey(`Fetching ${series.url}`));
                     return fetch(series.url)
                         .then((r: any) => r.text())
-                        .then((content: string) => {//todo recursion
-                            const loadMoreEpisodesLink = Extractor.loadMoreEpisodesLink(content);
-                            if (loadMoreEpisodesLink.length) {
-                                //create load more link
-                                const u = series.seriesUrl.split('/');
-                                u.pop();
-                                const loadMore = u.join('/') + loadMoreEpisodesLink.attr('href');
-                                return fetch(loadMore)
-                                    .then((r: any) => r.text())
-                                    .then((nextContent: string) => {//todo clean this
-                                        const $ = cheerio.load(content);
-                                        const next = cheerio.load(nextContent);
-                                        const nextEpisodes = next('.row.scroll-item');
-                                        $('a[title="Načítaj viac"]').parent().replaceWith(nextEpisodes.html());
-                                        return $.html();
-                                    });
-                            }
-
-                            return content;
-                        })
-                        .then((content: string) => FileSystem.writeFile(`${programDir}/series`, `${series.title}.html`, content))
+                        .then((content: string) => this.loadMoreEpisodes(series.seriesUrl, content))
+                        .then((content: string) => FileSystem.writeFile(`${programDir}/series`, `${series.title.replace('/','-')}.html`, content))
                 }
             )
         ).then((r: Array<{ content: string, file: string }>) => r.map((item: { content: string, file: string }) => item.file));
+    }
+
+    private loadMoreEpisodes(seriesUrl: string, content: string): Promise<string> {
+        const loadMoreEpisodesUrl = this.loadMoreEpisodesUrl(seriesUrl, content);
+        if (!loadMoreEpisodesUrl) {
+            return new Promise((resolve) => resolve(content));
+        }
+
+        console.log(chalk.gray(`Loading more from ${loadMoreEpisodesUrl}`));
+        return fetch(loadMoreEpisodesUrl)
+            .then((r: any) => r.text())
+            .then((nextContent: string) => this.loadMoreEpisodes(seriesUrl, this.appendMoreEpisodes(content, nextContent)));
+    }
+
+    private appendMoreEpisodes(originalContent: string, moreContent: string): string {
+        //todo extractor break down into multiple classes or rename it to something like DOM
+        return Extractor.appendEpisodes(
+            originalContent,
+            Extractor.moreEpisodes(moreContent)
+        );
+    }
+
+    private loadMoreEpisodesUrl(seriesUrl: string, content: string): string {
+        //is relative url coming from content
+        const loadMoreEpisodesLink = Extractor.loadMoreEpisodesLink(content);
+
+        if (!loadMoreEpisodesLink) {
+            return '';
+        }
+
+        //this gets hostname
+        const u = seriesUrl.split('/');
+        u.pop();
+
+        return u.join('/') + loadMoreEpisodesLink;
     }
 }
 
