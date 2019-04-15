@@ -100,7 +100,7 @@ class Extractor implements ExtractorServiceInterface {
         return url;
     }
 
-    public static episodeSchemaOrgMeta(content: string): Object {
+    public static episodeSchemaOrgMeta(content: string): Array<string> {
         const $ = cheerio.load(content, {xmlMode: false});
         return JSON.parse($('script[type="application/ld+json"]').html());
     }
@@ -119,10 +119,15 @@ class Extractor implements ExtractorServiceInterface {
             return false;
         });
 
+
+
         const html = $(filtered[0]).html();
         const m  = html && html.match(/var src\s=\s{.*?(mp4).*?}/gs);
-        const x = m[0].replace(/var src\s=\s/gs, '').replace(/'/g, '"');
+        if (!m) {
+            return [];
+        }
 
+        const x = m[0].replace(/var src\s=\s/gs, '').replace(/'/g, '"');
         return JSON.parse(x).mp4;
     }
 }
