@@ -6,14 +6,17 @@ import SeriesServiceInterface from "./SeriesServiceInterface";
 import FileSystem from "../FileSystem";
 import Extractor from "./Extractor";
 import chalk from "chalk";
+import {container} from "../app/config/ioc_config";
+import EpisodesServiceInterface from "./EpisodesServiceInterface";
+import CONSTANTS from "../app/config/constants";
 
 @injectable()
 class SeriesService implements SeriesServiceInterface {
-    cacheProgramSeriesIndexPages(url: string): Promise<Array<string>> {
+    cacheProgramSeriesIndexPages(url: string): void {
         console.log(chalk.grey(`Fetching ${url}`));
         const bits = url.split('/');
         let slug = bits.pop();
-        if (slug === 'archiv') {
+        if (slug === 'archiv' || slug === 'o-sutazi') {
             slug = bits.pop();
         }
         if (!slug) {
@@ -61,17 +64,17 @@ class SeriesService implements SeriesServiceInterface {
             });
     }
 
-    private cacheSeriesPages(programDir: string, seriesPages: Array<{ seriesUrl: string, url: string, title: string }>): Promise<Array<string>> {
-        return Promise.all(
-            seriesPages.map((series: { seriesUrl: string, url: string, title: string }) => {
-                    console.log(chalk.grey(`Fetching ${series.url}`));
-                    return fetch(series.url)
-                        .then((r: any) => r.text())
-                        .then((content: string) => this.loadMoreEpisodes(series.seriesUrl, content))
-                        .then((content: string) => FileSystem.writeFile(`${programDir}/series`, `${series.title.replace('/','-')}.html`, content))
-                }
-            )
-        ).then((r: Array<{ content: string, file: string }>) => r.map((item: { content: string, file: string }) => item.file));
+    private cacheSeriesPages(programDir: string, seriesPages: Array<{ seriesUrl: string, url: string, title: string }>): void {
+        const episodes = container.get<EpisodesServiceInterface>(CONSTANTS.JOJ_EPISODES);
+
+        seriesPages.forEach((series: { seriesUrl: string, url: string, title: string }) => {
+            console.log(chalk.grey(`Fetching serie ${series.url}`));
+            fetch(series.url)
+                .then((r: any) => r.text())
+                .then((content: string) => this.loadMoreEpisodes(series.seriesUrl, content))
+                .then((content: string) => FileSystem.writeFile(`${programDir}/series`, `${series.title.replace('/','-')}.html`, content))
+                .then((r: any) => episodes.cacheSeriesEpisodes([r.file]));
+        });
     }
 
     private loadMoreEpisodes(seriesUrl: string, content: string): Promise<string> {

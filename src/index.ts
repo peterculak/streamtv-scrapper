@@ -53,7 +53,8 @@ if (program.compile) {
 
         const episodes = container.get<EpisodesServiceInterface>(CONSTANTS.JOJ_EPISODES);
         series.cacheProgramSeriesIndexPages(program.programUrl)
-            .then((seriesIndexPages: Array<string>) => episodes.cacheSeriesEpisodes(seriesIndexPages))
-            .catch((err: Error) => console.log(chalk.red(err)));
+            // .then((seriesIndexPages: Array<string>) => episodes.cacheSeriesEpisodes(seriesIndexPages))
+            // .catch((err: Error) => console.log(chalk.red(err)))
+        ;
     }
 }

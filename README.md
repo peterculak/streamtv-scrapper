@@ -13,4 +13,4 @@ node lib/index.js
 node lib/index.js -s joj
 
 ### Stores https://www.joj.sk program archive list in cache
-node lib/index.js -s joj -p https://www.joj.sk/profesionali
+node lib/index.js -f -p https://www.joj.sk/profesionali

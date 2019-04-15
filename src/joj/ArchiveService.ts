@@ -36,21 +36,22 @@ class ArchiveService implements ArchiveServiceInterface {
         return this.compileArchiveForSlug(slug);
     }
 
-    compileArchive(): Promise<Array<any>> {
+    compileArchive(): void {
         const directories = glob.sync(`${this.cacheDir}/*/`);
         console.log(`Found ${directories.length} cached program folders`);
 
-        return Promise.all(directories.map((directory: string) => {
+
+        directories.forEach((directory: string) => {
             const bits = directory.split('/');
             const slug = bits[bits.length -2];
             if (!slug) {
                 throw Error('Can not determine program name from url');
             }
-            return this.compileArchiveForSlug(slug);
-        }));
+            this.compileArchiveForSlug(slug);
+        });
     }
 
-    private compileArchiveForSlug(slug: string): Promise<Array<any>> {
+    private compileArchiveForSlug(slug: string): Promise<any> {
         const seriesDir = `${this.cacheDir}/${slug}/series`;
         const jsonDir = `${this.cacheDir}/${slug}`;
         console.log(`Series dir ${seriesDir}`);
@@ -58,10 +59,7 @@ class ArchiveService implements ArchiveServiceInterface {
 
         return Promise.all(files.map((file: string) => this.episodeMetaData(`${seriesDir}/${file}`)))
             .then((archive: Array<any>) => this.groupEpisodesBySeason(archive))
-            .then((archive: Array<any>) => {
-                FileSystem.writeFile(jsonDir, `${slug}.json`, JSON.stringify(archive)).then(() => console.log(`Archive compiled in ${jsonDir}/${slug}.json`));
-                return new Promise(resolve => resolve(archive));
-            });
+            .then((archive: Array<any>) => FileSystem.writeFile(jsonDir, `${slug}.json`, JSON.stringify(archive)));
     }
 
     private episodeMetaData(file: string): Promise<Array<{}>> {
