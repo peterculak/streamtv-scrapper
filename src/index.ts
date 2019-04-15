@@ -4,7 +4,6 @@ import CONSTANTS from "./app/config/constants";
 import ArchiveServiceInterface from "./joj/ArchiveServiceInterface";
 import ExtractorServiceInterface from "./joj/ExtractorServiceInterface";
 import SeriesServiceInterface from "./joj/SeriesServiceInterface";
-import EpisodesServiceInterface from "./joj/EpisodesServiceInterface";
 
 const chalk = require('chalk');
 const clear = require('clear');
@@ -50,11 +49,6 @@ if (program.compile) {
 
     } else {//fetch episodes for program
         const series = container.get<SeriesServiceInterface>(CONSTANTS.JOJ_SERIES);
-
-        const episodes = container.get<EpisodesServiceInterface>(CONSTANTS.JOJ_EPISODES);
-        series.cacheProgramSeriesIndexPages(program.programUrl)
-            // .then((seriesIndexPages: Array<string>) => episodes.cacheSeriesEpisodes(seriesIndexPages))
-            // .catch((err: Error) => console.log(chalk.red(err)))
-        ;
+        series.cacheProgramSeriesIndexPages(program.programUrl);
     }
 }

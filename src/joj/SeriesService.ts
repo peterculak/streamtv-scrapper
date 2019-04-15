@@ -16,7 +16,7 @@ class SeriesService implements SeriesServiceInterface {
         console.log(chalk.grey(`Fetching ${url}`));
         const bits = url.split('/');
         let slug = bits.pop();
-        if (slug === 'archiv' || slug === 'o-sutazi') {
+        if (slug === 'archiv' || slug === 'o-sutazi' || slug === 'o-relacii') {
             slug = bits.pop();
         }
         if (!slug) {
@@ -65,6 +65,7 @@ class SeriesService implements SeriesServiceInterface {
     }
 
     private cacheSeriesPages(programDir: string, seriesPages: Array<{ seriesUrl: string, url: string, title: string }>): void {
+        //todo
         const episodes = container.get<EpisodesServiceInterface>(CONSTANTS.JOJ_EPISODES);
 
         seriesPages.forEach((series: { seriesUrl: string, url: string, title: string }) => {

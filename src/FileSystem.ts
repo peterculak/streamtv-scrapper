@@ -8,7 +8,6 @@ const chalk = require('chalk');
 @injectable()
 class FileSystem implements FileSystemInterface {
     static readFile(fileName: string): Promise<{content: string, name: string}> {
-        // console.log(`Reading file ${fileName}`);
         return new Promise((resolve, reject) => {
             fs.readFile(fileName, (err: Error, data: Object) => {
                 if (err) {
