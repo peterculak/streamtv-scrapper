@@ -3,6 +3,7 @@ import "reflect-metadata";
 const cheerio = require('cheerio');
 import ExtractorServiceInterface from "./ExtractorServiceInterface";
 import FileSystem from "../FileSystem";
+import chalk from "chalk";
 
 @injectable()
 class Extractor implements ExtractorServiceInterface {
@@ -97,6 +98,32 @@ class Extractor implements ExtractorServiceInterface {
         }
 
         return url;
+    }
+
+    public static episodeSchemaOrgMeta(content: string): Object {
+        const $ = cheerio.load(content, {xmlMode: false});
+        return JSON.parse($('script[type="application/ld+json"]').html());
+    }
+
+    public static episodeMp4Urls(content: string): Array<string> {
+        const $ = cheerio.load(content);
+        const scripts = $('script');
+
+        const filtered = scripts.filter((i: number, e: any) => {
+            const html = $(e).html();
+            if (html && html.length) {
+                const m  = html && html.match(/var src\s=\s{.*?(mp4).*?}/gs);
+                return m && m.length > 0;
+            }
+
+            return false;
+        });
+
+        const html = $(filtered[0]).html();
+        const m  = html && html.match(/var src\s=\s{.*?(mp4).*?}/gs);
+        const x = m[0].replace(/var src\s=\s/gs, '').replace(/'/g, '"');
+
+        return JSON.parse(x).mp4;
     }
 }
 

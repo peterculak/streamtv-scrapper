@@ -22,7 +22,8 @@ console.log(
 program
     .version('0.0.1')
     .description("CLI for scrapping TV channels")
-    .option('-s, --site <site>', 'Site url to scrap')
+
+    .option('-f, --fetch', 'When true it will fetch cache, when false it will compile json from cache')
     .option('-p, --programUrl [program]', 'Fetch all episodes for program url')
     .parse(process.argv);
 
@@ -31,7 +32,7 @@ if (!process.argv.slice(2).length) {
     process.exit();
 }
 
-if (program.site === 'joj') {
+if (program.fetch) {
     if (!program.programUrl) {//fetch list of programmes
         const archive = container.get<ArchiveServiceInterface>(CONSTANTS.JOJ_ARCHIVE);
         const extractor = container.get<ExtractorServiceInterface>(CONSTANTS.JOJ_EXTRACTOR);
@@ -50,4 +51,8 @@ if (program.site === 'joj') {
             .then((seriesIndexPages: Array<string>) => episodes.cacheSeriesEpisodes(seriesIndexPages))
             .catch((err: Error) => console.log(chalk.red(err)));
     }
+} else {
+    const archiveCompiler = container.get<ArchiveServiceInterface>(CONSTANTS.JOJ_ARCHIVE);
+    archiveCompiler.compileArchiveForProgram(program.programUrl)
+        .then((archive: Array<any>) => console.log(`Found episodes ${archive.length}`));
 }
