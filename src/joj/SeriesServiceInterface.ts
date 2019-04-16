@@ -1,5 +1,6 @@
 interface SeriesServiceInterface {
-    cacheProgramSeriesIndexPages(programUrl: string): void;
+    cacheProgramSeriesIndexPages(archive: Array<{}>): Promise<any>;
+    cacheProgramSeriesIndexPagesForProgram(programUrl: string): Promise<any>;
 }
 
 export default SeriesServiceInterface;

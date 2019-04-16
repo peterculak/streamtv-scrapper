@@ -1,4 +1,4 @@
-import {injectable} from "inversify";
+import {inject, injectable} from "inversify";
 import "reflect-metadata";
 
 const glob = require("glob");
@@ -8,12 +8,17 @@ import ArchiveServiceInterface from "./ArchiveServiceInterface";
 import FileSystem from "../FileSystem";
 import Extractor from "./Extractor";
 import chalk from "chalk";
+import ExtractorServiceInterface from "./ExtractorServiceInterface";
+import CONSTANTS from "../app/config/constants";
 
 @injectable()
 class ArchiveService implements ArchiveServiceInterface {
     private readonly channelUrl: string = 'https://www.joj.sk';
     private readonly archiveUrl: string = `${this.channelUrl}/archiv`;
     private readonly cacheDir: string = './var/cache/joj.sk';
+
+    constructor(@inject(CONSTANTS.JOJ_EXTRACTOR) private extractor: ExtractorServiceInterface) {
+    }
 
     cacheArchiveList(): Promise<any> {
         console.log(`Fetching ${this.archiveUrl}`);
@@ -26,7 +31,7 @@ class ArchiveService implements ArchiveServiceInterface {
         console.log(`Compiling json for ${url}`);
         const bits = url.split('/');
         let slug = bits.pop();
-        if (slug === 'archiv') {
+        if (slug === 'archiv' || slug === 'o-sutazi' || slug === 'o-relacii') {
             slug = bits.pop();
         }
         if (!slug) {
@@ -42,7 +47,10 @@ class ArchiveService implements ArchiveServiceInterface {
 
         return directories.map((directory: string) => {
             const bits = directory.split('/');
-            const slug = bits[bits.length -2];
+            let slug = bits[bits.length - 2];
+            if (slug === 'archiv' || slug === 'o-sutazi' || slug === 'o-relacii') {
+                slug = bits[bits.length - 3];
+            }
             if (!slug) {
                 throw Error('Can not determine program name from url');
             }
@@ -74,29 +82,29 @@ class ArchiveService implements ArchiveServiceInterface {
         // console.log(chalk.gray(`Episode meta data file ${file}`));
 
         return FileSystem.readFile(file)
-            .then((file: {content: string, name: string}) => Extractor.episodeSchemaOrgMeta(file.content))
+            .then((file: { content: string, name: string }) => this.extractor.episodeSchemaOrgMeta(file.content))
             .then((meta: any) => {
                 const seriesPath = file.substr(0, file.lastIndexOf('/'));
                 const bits = file.split('/');
-                const serieFileName = bits[bits.length -1];
+                const serieFileName = bits[bits.length - 1];
                 const iframeFileSource = `${seriesPath}/iframes/${serieFileName}`;
 
                 // console.log(chalk.grey(`Iframe file ${iframeFile}`));
                 return FileSystem.readFile(`${seriesPath}/iframes/${serieFileName}`)
-                    .then((iframeFile: {content: string, name: string}) => {
-                    meta.mp4 = Extractor.episodeMp4Urls(iframeFile.content);
+                    .then((iframeFile: { content: string, name: string }) => {
+                        meta.mp4 = this.extractor.episodeMp4Urls(iframeFile.content);
 
-                    if (!meta.mp4.length) {//possibly other format
-                        console.log(chalk.red(`Mp4 urls not found in ${iframeFileSource}`));
-                    }
-                    return meta;
-                });
+                        if (!meta.mp4.length) {//possibly other format
+                            console.log(chalk.red(`Mp4 urls not found in ${iframeFileSource}`));
+                        }
+                        return meta;
+                    });
             })
             ;
     }
 
     private groupEpisodesBySeason(archive: Array<any>): Array<any> {
-        return _.groupBy(archive, (item: {partOfSeason: {seasonNumber: number}}) => item.partOfSeason.seasonNumber);
+        return _.groupBy(archive, (item: { partOfSeason: { seasonNumber: number } }) => item.partOfSeason.seasonNumber);
     }
 }
 

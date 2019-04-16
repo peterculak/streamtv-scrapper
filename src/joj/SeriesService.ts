@@ -1,18 +1,29 @@
-import {injectable} from "inversify";
+import {inject, injectable} from "inversify";
 import "reflect-metadata";
 
 const fetch = require('node-fetch');
 import SeriesServiceInterface from "./SeriesServiceInterface";
 import FileSystem from "../FileSystem";
-import Extractor from "./Extractor";
 import chalk from "chalk";
-import {container} from "../app/config/ioc_config";
 import EpisodesServiceInterface from "./EpisodesServiceInterface";
 import CONSTANTS from "../app/config/constants";
+import ExtractorServiceInterface from "./ExtractorServiceInterface";
 
 @injectable()
 class SeriesService implements SeriesServiceInterface {
-    cacheProgramSeriesIndexPages(url: string): void {
+    constructor(@inject(CONSTANTS.JOJ_EPISODES) private episodeService: EpisodesServiceInterface,
+                @inject(CONSTANTS.JOJ_EXTRACTOR) private extractor: ExtractorServiceInterface) {
+    }
+
+    cacheProgramSeriesIndexPages(archive: Array<{}>): Promise<any> {
+        return archive.reduce((promiseChain: any, currentProgram: any) => {
+            return promiseChain.then((chainResults: any) => {
+                return this.cacheProgramSeriesIndexPagesForProgram(currentProgram.url).then((currentResult: any) => [...chainResults, currentResult]);
+            });
+        }, Promise.resolve([]));
+    }
+
+    cacheProgramSeriesIndexPagesForProgram(url: string): Promise<any> {
         console.log(chalk.grey(`Fetching ${url}`));
         const bits = url.split('/');
         let slug = bits.pop();
@@ -29,7 +40,7 @@ class SeriesService implements SeriesServiceInterface {
             .then((r: any) => r.text())
             .then((body: string) => FileSystem.writeFile(programDir, 'index.html', body))
             .then((r: { content: string, file: string }) => {
-                let seriesArchiveUrl = Extractor.seriesArchiveUrl(r.content);
+                let seriesArchiveUrl = this.extractor.seriesArchiveUrl(r.content);
                 if (!seriesArchiveUrl) {
                     seriesArchiveUrl = url;
 
@@ -49,12 +60,12 @@ class SeriesService implements SeriesServiceInterface {
                 return r.text();
             })
             .then((content: string) => {
-                const meta = Extractor.seriesPagesMetaData(content);
+                const meta = this.extractor.seriesPagesMetaData(content);
                 if (!meta.length) {
                     return [{title: '1. séria', url: seriesArchiveUrl, seriesUrl: seriesUrl}];
                 }
 
-                return meta.map((elem: {id: string, title: string}) => {
+                return meta.map((elem: { id: string, title: string }) => {
                     return {
                         title: elem.title,
                         url: elem.id ? `${seriesUrl}?seasonId=${elem.id}` : seriesUrl,
@@ -64,18 +75,12 @@ class SeriesService implements SeriesServiceInterface {
             });
     }
 
-    private cacheSeriesPages(programDir: string, seriesPages: Array<{ seriesUrl: string, url: string, title: string }>): void {
-        //todo
-        const episodes = container.get<EpisodesServiceInterface>(CONSTANTS.JOJ_EPISODES);
-
-        seriesPages.forEach((series: { seriesUrl: string, url: string, title: string }) => {
-            console.log(chalk.grey(`Fetching serie ${series.url}`));
-            fetch(series.url)
-                .then((r: any) => r.text())
-                .then((content: string) => this.loadMoreEpisodes(series.seriesUrl, content))
-                .then((content: string) => FileSystem.writeFile(`${programDir}/series`, `${series.title.replace('/','-')}.html`, content))
-                .then((r: any) => episodes.cacheSeriesEpisodes([r.file]));
-        });
+    private cacheSeriesPages(programDir: string, seriesPages: Array<{ seriesUrl: string, url: string, title: string }>): Promise<any[]> {
+        return Promise.all(seriesPages.map((series: { seriesUrl: string, url: string, title: string }) => fetch(series.url)
+            .then((r: any) => r.text())
+            .then((content: string) => this.loadMoreEpisodes(series.seriesUrl, content))
+            .then((content: string) => FileSystem.writeFile(`${programDir}/series`, `${series.title.replace('/', '-')}.html`, content))
+            .then((r: any) => this.episodeService.cacheSeriesEpisodes([r.file]))));
     }
 
     private loadMoreEpisodes(seriesUrl: string, content: string): Promise<string> {
@@ -92,15 +97,15 @@ class SeriesService implements SeriesServiceInterface {
 
     private appendMoreEpisodes(originalContent: string, moreContent: string): string {
         //todo extractor break down into multiple classes or rename it to something like DOM
-        return Extractor.appendEpisodes(
+        return this.extractor.appendEpisodes(
             originalContent,
-            Extractor.moreEpisodes(moreContent)
+            this.extractor.moreEpisodes(moreContent)
         );
     }
 
     private loadMoreEpisodesUrl(seriesUrl: string, content: string): string {
         //is relative url coming from content
-        const loadMoreEpisodesLink = Extractor.loadMoreEpisodesLink(content);
+        const loadMoreEpisodesLink = this.extractor.loadMoreEpisodesLink(content);
 
         if (!loadMoreEpisodesLink) {
             return '';

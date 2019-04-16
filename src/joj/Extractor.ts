@@ -3,7 +3,6 @@ import "reflect-metadata";
 const cheerio = require('cheerio');
 import ExtractorServiceInterface from "./ExtractorServiceInterface";
 import FileSystem from "../FileSystem";
-import chalk from "chalk";
 
 @injectable()
 class Extractor implements ExtractorServiceInterface {
@@ -29,13 +28,13 @@ class Extractor implements ExtractorServiceInterface {
         return archive;
     }
 
-    public static seriesArchiveUrl(content: string): string {
+    public seriesArchiveUrl(content: string): string {
         const $ = cheerio.load(content);
         const a = $('.e-subnav-wrap a[title*="Arch"]');
         return a.length ? a.attr('href'): '';
     }
 
-    public static seriesPagesMetaData(content: string): Array<{ id: string, title: string }> {
+    public seriesPagesMetaData(content: string): Array<{ id: string, title: string }> {
         const $ = cheerio.load(content);
         const row = $('.e-subnav-wrap').html();
         const meta: Array<{ id: string, title: string }> = [];
@@ -46,7 +45,7 @@ class Extractor implements ExtractorServiceInterface {
         return meta;
     }
 
-    public static episodesList(content: string): Array<{title: string, url: string, img: string, date: string, episode: number}> {
+    public episodesList(content: string): Array<{title: string, url: string, img: string, date: string, episode: number}> {
         const $ = cheerio.load(content);
         const episodes: Array<{title: string, url: string, img: string, date: string, episode: number}> = [];
         $('.e-mobile-article-p article').each((i: number, elem: any) => {
@@ -65,18 +64,18 @@ class Extractor implements ExtractorServiceInterface {
         return episodes;
     }
 
-    public static loadMoreEpisodesLink(content: string): string {
+    public loadMoreEpisodesLink(content: string): string {
         const $ = cheerio.load(content);
         const a = $('a[title="Načítaj viac"]');
         return a.length ? a.attr('href') : '';
     }
 
-    public static moreEpisodes(content: string): string {
+    public moreEpisodes(content: string): string {
         const $ = cheerio.load(content);
         return $('.row.scroll-item').html();
     }
 
-    public static appendEpisodes(content: string, moreContent: string): string {
+    public appendEpisodes(content: string, moreContent: string): string {
         const $ = cheerio.load(content);
         $('a[title="Načítaj viac"]').parent().replaceWith(moreContent);
 
@@ -84,7 +83,7 @@ class Extractor implements ExtractorServiceInterface {
     }
 
     //todo this is flaky for some reason
-    public static episodeIframeUrl(content: string): string {
+    public episodeIframeUrl(content: string): string {
         const $ = cheerio.load(content);
         const iframes = $('section.s-video-detail iframe');
         let url = '';
@@ -100,12 +99,12 @@ class Extractor implements ExtractorServiceInterface {
         return url;
     }
 
-    public static episodeSchemaOrgMeta(content: string): Array<string> {
+    public episodeSchemaOrgMeta(content: string): Array<string> {
         const $ = cheerio.load(content, {xmlMode: false});
         return JSON.parse($('script[type="application/ld+json"]').html());
     }
 
-    public static episodeMp4Urls(content: string): Array<string> {
+    public episodeMp4Urls(content: string): Array<string> {
         const $ = cheerio.load(content);
         const scripts = $('script');
 
