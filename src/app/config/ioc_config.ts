@@ -12,16 +12,17 @@ import SeriesService from "../../joj/SeriesService";
 import EpisodesServiceInterface from "../../joj/EpisodesServiceInterface";
 import EpisodesService from "../../joj/EpisodesService";
 
-const inversify = require("inversify");
-// const fetch = require('node-fetch');
+import * as Pino from "pino";
+import FileSystemInterface from "../../FileSystemInterface";
+import FileSystem from "../../FileSystem";
+const logger = require('pino')();
 
 let container = new Container();
 container.bind<ArchiveServiceInterface>(CONSTANTS.JOJ_ARCHIVE).to(ArchiveService);
 container.bind<EpisodesServiceInterface>(CONSTANTS.JOJ_EPISODES).to(EpisodesService);
 container.bind<SeriesServiceInterface>(CONSTANTS.JOJ_SERIES).to(SeriesService);
 container.bind<ExtractorServiceInterface>(CONSTANTS.JOJ_EXTRACTOR).to(Extractor);
-// inversify.decorate(inversify.injectable(), fetch);
-// container.bind(CONSTANTS.FETCH).to(fetch);
-
+container.bind<FileSystemInterface>(CONSTANTS.FILESYSTEM).to(FileSystem);
+container.bind<Pino.Logger>(CONSTANTS.PINO_LOGGER).toConstantValue(logger);
 
 export { container };

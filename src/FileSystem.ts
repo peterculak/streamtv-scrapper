@@ -1,13 +1,19 @@
-import {injectable} from "inversify";
+import {inject, injectable} from "inversify";
 import "reflect-metadata";
 import FileSystemInterface from "./FileSystemInterface";
+import CONSTANTS from "./app/config/constants";
+import * as Pino from "pino";
 
 const fs = require('fs');
-const chalk = require('chalk');
 
 @injectable()
 class FileSystem implements FileSystemInterface {
-    static readFile(fileName: string): Promise<{content: string, name: string}> {
+    constructor(
+        @inject(CONSTANTS.PINO_LOGGER) private logger: Pino.Logger,
+    ) {
+    }
+
+    readFile(fileName: string): Promise<{content: string, name: string}> {
         return new Promise((resolve, reject) => {
             fs.readFile(fileName, (err: Error, data: Object) => {
                 if (err) {
@@ -19,21 +25,19 @@ class FileSystem implements FileSystemInterface {
         });
     }
 
-    static writeFile(dir: string, fileName: string, content: string): Promise<{ content: string, file: string }> {
+    writeFile(dir: string, fileName: string, content: string): Promise<{ content: string, file: string }> {
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, {recursive: true});
         }
 
         const cacheFile = `${dir}/${fileName}`;
         return new Promise((resolve, reject) => {
-            fs.writeFile(cacheFile, content, (err: Error) => {
-                if (err) {
-                    console.log(chalk.red(err));
+            fs.writeFile(cacheFile, content, (error: Error) => {
+                if (error) {
+                    this.logger.error(error);
                     reject();
                 } else {
-                    console.log(chalk.green(
-                        `File saved at ${cacheFile}`
-                    ));
+                    this.logger.debug(`File saved at ${cacheFile}`);
                     resolve({ content: content, file: cacheFile });
                 }
             });

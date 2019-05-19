@@ -1,15 +1,19 @@
-import {injectable} from "inversify";
+import {inject, injectable} from "inversify";
 import "reflect-metadata";
 const cheerio = require('cheerio');
 import ExtractorServiceInterface from "./ExtractorServiceInterface";
-import FileSystem from "../FileSystem";
+import CONSTANTS from "../app/config/constants";
+import FileSystemInterface from "../FileSystemInterface";
 
 @injectable()
 class Extractor implements ExtractorServiceInterface {
     private readonly cacheDir: string = './var/cache/joj.sk';
 
+    constructor(@inject(CONSTANTS.FILESYSTEM) private filesystem: FileSystemInterface) {
+    }
+
     extract(): Promise<Array<{title: string, img: string, url: string}>> {
-        return FileSystem.readFile(`${this.cacheDir}/archiv.html`)
+        return this.filesystem.readFile(`${this.cacheDir}/archiv.html`)
             .then((file: {content: string, name: string}) => this.extractArchive(file.content));
     }
 
@@ -82,7 +86,6 @@ class Extractor implements ExtractorServiceInterface {
         return $.html();
     }
 
-    //todo this is flaky for some reason
     public episodeIframeUrl(content: string): string {
         const $ = cheerio.load(content);
         const iframes = $('section.s-video-detail iframe');

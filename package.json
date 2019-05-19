@@ -16,6 +16,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/pino": "^5.8.7",
     "chalk": "^2.4.2",
     "cheerio": "^1.0.0-rc.2",
     "clear": "^0.1.0",
@@ -25,6 +26,8 @@
     "inversify": "^5.0.1",
     "node-fetch": "^2.3.0",
     "path": "^0.12.7",
+    "pino": "^5.12.5",
+    "pino-pretty": "^3.0.0",
     "reflect-metadata": "^0.1.13",
     "underscore": "^1.9.1"
   },

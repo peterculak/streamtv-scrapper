@@ -1,18 +1,21 @@
 import {inject, injectable} from "inversify";
 import "reflect-metadata";
-
-const fetch = require('node-fetch');
 import SeriesServiceInterface from "./SeriesServiceInterface";
-import FileSystem from "../FileSystem";
-import chalk from "chalk";
 import EpisodesServiceInterface from "./EpisodesServiceInterface";
 import CONSTANTS from "../app/config/constants";
 import ExtractorServiceInterface from "./ExtractorServiceInterface";
+import * as Pino from "pino";
+import FileSystemInterface from "../FileSystemInterface";
+const fetch = require('node-fetch');
 
 @injectable()
 class SeriesService implements SeriesServiceInterface {
-    constructor(@inject(CONSTANTS.JOJ_EPISODES) private episodeService: EpisodesServiceInterface,
-                @inject(CONSTANTS.JOJ_EXTRACTOR) private extractor: ExtractorServiceInterface) {
+    constructor(
+        @inject(CONSTANTS.JOJ_EPISODES) private episodeService: EpisodesServiceInterface,
+        @inject(CONSTANTS.JOJ_EXTRACTOR) private extractor: ExtractorServiceInterface,
+        @inject(CONSTANTS.PINO_LOGGER) private logger: Pino.Logger,
+        @inject(CONSTANTS.FILESYSTEM) private filesystem: FileSystemInterface,
+    ) {
     }
 
     cacheProgramSeriesIndexPages(archive: Array<{}>): Promise<any> {
@@ -24,7 +27,7 @@ class SeriesService implements SeriesServiceInterface {
     }
 
     cacheProgramSeriesIndexPagesForProgram(url: string): Promise<any> {
-        console.log(chalk.grey(`Fetching ${url}`));
+        this.logger.debug(`Fetching ${url}`);
         const bits = url.split('/');
         let slug = bits.pop();
         if (slug === 'archiv' || slug === 'o-sutazi' || slug === 'o-relacii') {
@@ -38,7 +41,7 @@ class SeriesService implements SeriesServiceInterface {
 
         return fetch(url)
             .then((r: any) => r.text())
-            .then((body: string) => FileSystem.writeFile(programDir, 'index.html', body))
+            .then((body: string) => this.filesystem.writeFile(programDir, 'index.html', body))
             .then((r: { content: string, file: string }) => {
                 let seriesArchiveUrl = this.extractor.seriesArchiveUrl(r.content);
                 if (!seriesArchiveUrl) {
@@ -79,7 +82,7 @@ class SeriesService implements SeriesServiceInterface {
         return Promise.all(seriesPages.map((series: { seriesUrl: string, url: string, title: string }) => fetch(series.url)
             .then((r: any) => r.text())
             .then((content: string) => this.loadMoreEpisodes(series.seriesUrl, content))
-            .then((content: string) => FileSystem.writeFile(`${programDir}/series`, `${series.title.replace('/', '-')}.html`, content))
+            .then((content: string) => this.filesystem.writeFile(`${programDir}/series`, `${series.title.replace('/', '-')}.html`, content))
             .then((r: any) => this.episodeService.cacheSeriesEpisodes([r.file]))));
     }
 
@@ -89,7 +92,7 @@ class SeriesService implements SeriesServiceInterface {
             return new Promise((resolve) => resolve(content));
         }
 
-        console.log(chalk.gray(`Loading more from ${loadMoreEpisodesUrl}`));
+        this.logger.debug(`Loading more from ${loadMoreEpisodesUrl}`);
         return fetch(loadMoreEpisodesUrl)
             .then((r: any) => r.text())
             .then((nextContent: string) => this.loadMoreEpisodes(seriesUrl, this.appendMoreEpisodes(content, nextContent)));

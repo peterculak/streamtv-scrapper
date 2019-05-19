@@ -4,7 +4,8 @@ import CONSTANTS from "./app/config/constants";
 import ArchiveServiceInterface from "./joj/ArchiveServiceInterface";
 import ExtractorServiceInterface from "./joj/ExtractorServiceInterface";
 import SeriesServiceInterface from "./joj/SeriesServiceInterface";
-import FileSystem from "./FileSystem";
+import * as Pino from "pino";
+import FileSystemInterface from "./FileSystemInterface";
 
 const chalk = require('chalk');
 const clear = require('clear');
@@ -19,6 +20,26 @@ console.log(
     )
 );
 
+function increaseVerbosity(v: any, total: number) {
+    return total + 1;
+}
+
+function verbosity(level: number) {
+    let v = 'silent';
+
+    if (level === 3) {
+        v = 'trace';
+    }
+    if (level === 2) {
+        v = 'debug';
+    }
+    if (level === 1) {
+        v = 'info';
+    }
+
+    return v;
+}
+
 program
     .version('0.0.1')
     .description("CLI for scrapping TV channels")
@@ -27,6 +48,7 @@ program
     .option('-c, --compile', 'When true it will compile json from cache')
     .option('-x, --pattern [pattern]', 'Regexp pattern. Will fetch archives for all programmes with matching in title')
     .option('-p, --programUrl [program]', 'Fetch all episodes for program url')
+    .option('-v, --verbosity', 'Verbosity level', increaseVerbosity, 0)
     .parse(process.argv);
 
 if (!process.argv.slice(2).length) {
@@ -35,6 +57,9 @@ if (!process.argv.slice(2).length) {
 }
 const archiveCompiler = container.get<ArchiveServiceInterface>(CONSTANTS.JOJ_ARCHIVE);
 const series = container.get<SeriesServiceInterface>(CONSTANTS.JOJ_SERIES);
+const filesystem = container.get<FileSystemInterface>(CONSTANTS.FILESYSTEM);
+const logger = container.get<Pino.Logger>(CONSTANTS.PINO_LOGGER);
+logger.level = verbosity(program.verbosity);
 
 if (!program.programUrl) {
     const archive = container.get<ArchiveServiceInterface>(CONSTANTS.JOJ_ARCHIVE);
@@ -43,27 +68,26 @@ if (!program.programUrl) {
     if (program.fetch && program.compile) {
         archive.cacheArchiveList()
             .then(() => extractor.extract())
-            .then((archive: Array<{}>) => FileSystem.writeFile('./var/cache/joj.sk', 'archive.json', JSON.stringify(archive)))
+            .then((archive: Array<{}>) => filesystem.writeFile('./var/cache/joj.sk', 'archive.json', JSON.stringify(archive)))
             .then((file: any) => {
                 let jsonArchive = JSON.parse(file.content);
-                console.log(`Archive contains ${jsonArchive.length} item(s)`);
+                logger.info(`Archive contains ${jsonArchive.length} item(s)`);
                 if (program.pattern) {
-                    console.log(`RegExp filter pattern /${program.pattern}/`);
+                    logger.debug(`RegExp filter pattern /${program.pattern}/`);
                     jsonArchive = jsonArchive.filter(
                         (element: any) => element.title.match(new RegExp(program.pattern, 'i')) !== null
                     );
-                    console.log(`Filtered archive contains ${jsonArchive.length} item(s)`);
+                    logger.info(`Filtered archive contains ${jsonArchive.length} item(s)`);
                 }
                 series.cacheProgramSeriesIndexPages(jsonArchive);
             })
-            .catch((err: Error) => console.log(chalk.red(err)));
-
-        //this needs .then
+            .catch((err: Error) => logger.error(err));
+        //this needs .then to compile json
     } else if (program.fetch) {//only fetch !compile
         archive.cacheArchiveList()
             .then(() => extractor.extract())
-            .then((archive: Array<{}>) => console.log(chalk.green(`Archive contains ${archive.length} items`)))
-            .catch((err: Error) => console.log(chalk.red(err)));
+            .then((archive: Array<{}>) => logger.info(`Archive contains ${archive.length} items`))
+            .catch((err: Error) => logger.error(err));
     } else if (program.compile) {//only compile !fetch
         archiveCompiler.compileArchive();
     }

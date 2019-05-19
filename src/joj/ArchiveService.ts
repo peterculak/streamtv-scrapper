@@ -5,11 +5,10 @@ const glob = require("glob");
 const fetch = require('node-fetch');
 const _ = require('underscore');
 import ArchiveServiceInterface from "./ArchiveServiceInterface";
-import FileSystem from "../FileSystem";
-import Extractor from "./Extractor";
-import chalk from "chalk";
 import ExtractorServiceInterface from "./ExtractorServiceInterface";
 import CONSTANTS from "../app/config/constants";
+import * as Pino from "pino";
+import FileSystemInterface from "../FileSystemInterface";
 
 @injectable()
 class ArchiveService implements ArchiveServiceInterface {
@@ -17,18 +16,21 @@ class ArchiveService implements ArchiveServiceInterface {
     private readonly archiveUrl: string = `${this.channelUrl}/archiv`;
     private readonly cacheDir: string = './var/cache/joj.sk';
 
-    constructor(@inject(CONSTANTS.JOJ_EXTRACTOR) private extractor: ExtractorServiceInterface) {
-    }
+    constructor(
+        @inject(CONSTANTS.JOJ_EXTRACTOR) private extractor: ExtractorServiceInterface,
+        @inject(CONSTANTS.PINO_LOGGER) private logger: Pino.Logger,
+        @inject(CONSTANTS.FILESYSTEM) private filesystem: FileSystemInterface,
+    ) {}
 
     cacheArchiveList(): Promise<any> {
-        console.log(`Fetching ${this.archiveUrl}`);
+        this.logger.info(`Fetching ${this.archiveUrl}`);
         return fetch(this.archiveUrl)
             .then((r: any) => r.text())
-            .then((body: string) => FileSystem.writeFile(this.cacheDir, 'archiv.html', body));
+            .then((body: string) => this.filesystem.writeFile(this.cacheDir, 'archiv.html', body));
     }
 
     compileArchiveForProgram(url: string): Promise<Array<any>> {
-        console.log(`Compiling json for ${url}`);
+        this.logger.info(`Compiling json for ${url}`);
         const bits = url.split('/');
         let slug = bits.pop();
         if (slug === 'archiv' || slug === 'o-sutazi' || slug === 'o-relacii') {
@@ -43,7 +45,7 @@ class ArchiveService implements ArchiveServiceInterface {
 
     compileArchive(): Promise<any> {
         const directories = glob.sync(`${this.cacheDir}/*/`);
-        console.log(`Found ${directories.length} cached program folders`);
+        this.logger.info(`Found ${directories.length} cached program folders`);
 
         return directories.map((directory: string) => {
             const bits = directory.split('/');
@@ -65,12 +67,12 @@ class ArchiveService implements ArchiveServiceInterface {
     private compileArchiveForSlug(slug: string): Promise<any> {
         const seriesDir = `${this.cacheDir}/${slug}/series`;
         const jsonDir = `${this.cacheDir}/${slug}`;
-        console.log(chalk.gray(`Series dir ${seriesDir}`));
+        this.logger.info(`Series dir ${seriesDir}`);
         const files = glob.sync("**(!iframes)/*.html", {cwd: seriesDir});
 
         return Promise.all(files.map((file: string) => this.episodeMetaData(`${seriesDir}/${file}`)))
             .then((archive: Array<any>) =>
-                FileSystem.writeFile(
+                this.filesystem.writeFile(
                     jsonDir,
                     `${slug}.json`,
                     JSON.stringify(this.groupEpisodesBySeason(archive))
@@ -79,9 +81,9 @@ class ArchiveService implements ArchiveServiceInterface {
     }
 
     private episodeMetaData(file: string): Promise<Array<{}>> {
-        // console.log(chalk.gray(`Episode meta data file ${file}`));
+        this.logger.debug(`Episode meta data file ${file}`);
 
-        return FileSystem.readFile(file)
+        return this.filesystem.readFile(file)
             .then((file: { content: string, name: string }) => this.extractor.episodeSchemaOrgMeta(file.content))
             .then((meta: any) => {
                 const seriesPath = file.substr(0, file.lastIndexOf('/'));
@@ -89,13 +91,13 @@ class ArchiveService implements ArchiveServiceInterface {
                 const serieFileName = bits[bits.length - 1];
                 const iframeFileSource = `${seriesPath}/iframes/${serieFileName}`;
 
-                // console.log(chalk.grey(`Iframe file ${iframeFile}`));
-                return FileSystem.readFile(`${seriesPath}/iframes/${serieFileName}`)
+                this.logger.debug(`Iframe file ${iframeFileSource}`);
+                return this.filesystem.readFile(`${seriesPath}/iframes/${serieFileName}`)
                     .then((iframeFile: { content: string, name: string }) => {
                         meta.mp4 = this.extractor.episodeMp4Urls(iframeFile.content);
 
                         if (!meta.mp4.length) {//possibly other format
-                            console.log(chalk.red(`Mp4 urls not found in ${iframeFileSource}`));
+                            this.logger.warn(`Mp4 urls not found in ${iframeFileSource}`);
                         }
                         return meta;
                     });
