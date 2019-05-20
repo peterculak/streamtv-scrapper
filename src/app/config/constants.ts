@@ -5,6 +5,7 @@ const CONSTANTS = {
     JOJ_EXTRACTOR: Symbol.for("JojExtractor"),
     LOGGER: Symbol.for("Logger"),
     FILESYSTEM: Symbol.for("FileSystem"),
+    CLIENT: Symbol.for("Client"),
     PINO_LOGGER: Symbol.for("PinoLogger"),
     CHEERIO: Symbol.for("Cheerio"),
 };

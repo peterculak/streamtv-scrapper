@@ -6,6 +6,7 @@ import ExtractorServiceInterface from "./ExtractorServiceInterface";
 import CONSTANTS from "../app/config/constants";
 import FileSystemInterface from "../FileSystemInterface";
 import LoggerInterface from "../LoggerInterface";
+import ClientInterface from "../ClientInterface";
 
 @injectable()
 class EpisodesService implements EpisodesServiceInterface {
@@ -16,6 +17,7 @@ class EpisodesService implements EpisodesServiceInterface {
         @inject(CONSTANTS.JOJ_EXTRACTOR) private extractor: ExtractorServiceInterface,
         @inject(CONSTANTS.LOGGER) private logger: LoggerInterface,
         @inject(CONSTANTS.FILESYSTEM) private filesystem: FileSystemInterface,
+        @inject(CONSTANTS.CLIENT) private client: ClientInterface,
     ) {
     }
 
@@ -38,20 +40,6 @@ class EpisodesService implements EpisodesServiceInterface {
         this.fetchSequenceMode = true;
     }
 
-    private getData(url: string): Promise<any> {
-        this.logger.info(`Fetching ${url}`);
-        return fetch(url)
-            .then((r: any) => r.text())
-            .then((content: string) => {
-                if (content.match(/Server Error/gs)) {
-                    this.logger.error(`Server Error for ${url}`);
-                    return this.getData(url);
-                }
-
-                return content;
-            })
-    }
-
     private cacheEpisodePages(seriesDir: string, episodePages: Array<{ url: string, title: string, episode: number, date: string }>): Promise<any> {
         this.logger.debug(`Fetch mode: ${this.fetchMode()}`);
 
@@ -67,7 +55,8 @@ class EpisodesService implements EpisodesServiceInterface {
     }
 
     private cacheEpisodePage(seriesDir: string, episode: any) {
-        return this.getData(episode.url)
+        return this.client.fetch(episode.url)
+            // .then((r: Response) => r.text())
             .then((content: string) => {//this caches page which contains url to video iframe
                 this.filesystem.writeFile(seriesDir, `${episode.episode}.html`, content);
                 return content;

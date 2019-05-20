@@ -18,6 +18,8 @@ import FileSystemInterface from "../../FileSystemInterface";
 import FileSystem from "../../FileSystem";
 import LoggerInterface from "../../LoggerInterface";
 import Logger from "../../Logger";
+import ClientInterface from "../../ClientInterface";
+import Client from "../../Client";
 const pino = require('pino')();
 const cheerio = require('cheerio');
 
@@ -30,5 +32,6 @@ container.bind<FileSystemInterface>(CONSTANTS.FILESYSTEM).to(FileSystem);
 container.bind<Pino.Logger>(CONSTANTS.PINO_LOGGER).toConstantValue(pino);
 container.bind<CheerioAPI>(CONSTANTS.CHEERIO).toConstantValue(cheerio);
 container.bind<LoggerInterface>(CONSTANTS.LOGGER).to(Logger);
+container.bind<ClientInterface>(CONSTANTS.CLIENT).to(Client);
 
 export { container };

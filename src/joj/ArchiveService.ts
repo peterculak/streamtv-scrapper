@@ -2,13 +2,13 @@ import {inject, injectable} from "inversify";
 import "reflect-metadata";
 
 const glob = require("glob");
-const fetch = require('node-fetch');
 const _ = require('underscore');
 import ArchiveServiceInterface from "./ArchiveServiceInterface";
 import ExtractorServiceInterface from "./ExtractorServiceInterface";
 import CONSTANTS from "../app/config/constants";
 import FileSystemInterface from "../FileSystemInterface";
 import LoggerInterface from "../LoggerInterface";
+import ClientInterface from "../ClientInterface";
 
 @injectable()
 class ArchiveService implements ArchiveServiceInterface {
@@ -20,12 +20,12 @@ class ArchiveService implements ArchiveServiceInterface {
         @inject(CONSTANTS.JOJ_EXTRACTOR) private extractor: ExtractorServiceInterface,
         @inject(CONSTANTS.LOGGER) private logger: LoggerInterface,
         @inject(CONSTANTS.FILESYSTEM) private filesystem: FileSystemInterface,
+        @inject(CONSTANTS.CLIENT) private client: ClientInterface,
     ) {}
 
     cacheArchiveList(): Promise<any> {
-        this.logger.info(`Fetching ${this.archiveUrl}`);
-        return fetch(this.archiveUrl)
-            .then((r: any) => r.text())
+        return this.client.fetch(this.archiveUrl)
+            // .then((r: any) => r.text())
             .then((body: string) => this.filesystem.writeFile(this.cacheDir, 'archiv.html', body));
     }
 
