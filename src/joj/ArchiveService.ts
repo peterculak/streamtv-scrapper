@@ -25,7 +25,7 @@ class ArchiveService implements ArchiveServiceInterface {
 
     cacheArchiveList(): Promise<any> {
         return this.client.fetch(this.archiveUrl)
-            // .then((r: any) => r.text())
+            .then((r: any) => r.text())
             .then((body: string) => this.filesystem.writeFile(this.cacheDir, 'archiv.html', body));
     }
 

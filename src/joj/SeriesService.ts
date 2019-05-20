@@ -41,7 +41,7 @@ class SeriesService implements SeriesServiceInterface {
         const programDir = `./var/cache/joj.sk/${slug}`;
 
         return this.client.fetch(url)
-            // .then((r: any) => r.text())
+            .then((r: any) => r.text())
             .then((body: string) => this.filesystem.writeFile(programDir, 'index.html', body))
             .then((r: { content: string, file: string }) => {
                 let seriesArchiveUrl = this.extractor.seriesArchiveUrl(r.content);
@@ -81,7 +81,8 @@ class SeriesService implements SeriesServiceInterface {
 
     private cacheSeriesPages(programDir: string, seriesPages: Array<{ seriesUrl: string, url: string, title: string }>): Promise<any[]> {
         return Promise.all(seriesPages.map((series: { seriesUrl: string, url: string, title: string }) => this.client.fetch(series.url)
-            // .then((r: any) => r.text())
+            .then((r: any) => r.text())
+
             .then((content: string) => this.loadMoreEpisodes(series.seriesUrl, content))
             .then((content: string) => this.filesystem.writeFile(`${programDir}/series`, `${series.title.replace('/', '-')}.html`, content))
             .then((r: any) => this.episodeService.cacheSeriesEpisodes([r.file]))));
@@ -95,7 +96,7 @@ class SeriesService implements SeriesServiceInterface {
 
         this.logger.debug(`Loading more from ${loadMoreEpisodesUrl}`);
         return this.client.fetch(loadMoreEpisodesUrl)
-            // .then((r: any) => r.text())
+            .then((r: any) => r.text())
             .then((nextContent: string) => this.loadMoreEpisodes(seriesUrl, this.appendMoreEpisodes(content, nextContent)));
     }
 

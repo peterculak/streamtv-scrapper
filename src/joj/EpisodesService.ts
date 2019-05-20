@@ -56,7 +56,7 @@ class EpisodesService implements EpisodesServiceInterface {
 
     private cacheEpisodePage(seriesDir: string, episode: any) {
         return this.client.fetch(episode.url)
-            // .then((r: Response) => r.text())
+            .then((r: Response) => r.text())
             .then((content: string) => {//this caches page which contains url to video iframe
                 this.filesystem.writeFile(seriesDir, `${episode.episode}.html`, content);
                 return content;

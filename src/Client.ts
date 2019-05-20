@@ -17,15 +17,13 @@ class Client implements ClientInterface {
         this.logger.info(`Fetching ${url}`);
 
         let retry = options && options.retry || this.retry;
-        let result: string = '';
-        let response;
+        let response: Response = new fetch.Response();
+        let body: string = '';
 
         while (retry > 0) {
             try {
-                result = await this.getData(url, options);
-                // response = r.clone();
-                // result = await r.text();
-                if (result.match(/Server Error/gs) || result.match(/502 Bad Gateway/gs)) {
+                body = await this.getData(url, options);
+                if (body.match(/Server Error/gs) || body.match(/502 Bad Gateway/gs)) {
                     this.logger.warn(`Server error for ${url}`);
                     retry = retry - 1;
                     if (retry === 0) {
@@ -33,7 +31,7 @@ class Client implements ClientInterface {
                         throw new Error(`Retry limit of ${retry} reached for url ${url}`);
                     }
                     this.logger.info(`Retry ${url}`);
-                    result = await this.getData(url, options);
+                    body = await this.getData(url, options);
                 } else {
                     break;
                 }
@@ -46,11 +44,18 @@ class Client implements ClientInterface {
             }
         }
 
-        if (result.match(/Server Error/gs) || result.match(/502 Bad Gateway/gs)) {
+        if (body.match(/Server Error/gs) || body.match(/502 Bad Gateway/gs)) {
             throw new Error(`Retry limit of ${retry} reached for url ${url}`);
         }
 
-        return result;
+        const responseOptions = {
+            url: response.url,
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+        };
+
+        return new fetch.Response(body, responseOptions);
     }
 
     private getData(url: string, options?: any): Promise<string> {
