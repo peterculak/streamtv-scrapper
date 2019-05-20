@@ -22,7 +22,8 @@ class Client implements ClientInterface {
 
         while (retry > 0) {
             try {
-                body = await this.getData(url, options);
+                response = await this.sendRequest(url, options);
+                body = await response.text();
                 if (body.match(/Server Error/gs) || body.match(/502 Bad Gateway/gs)) {
                     this.logger.warn(`Server error for ${url}`);
                     retry = retry - 1;
@@ -31,7 +32,8 @@ class Client implements ClientInterface {
                         throw new Error(`Retry limit of ${retry} reached for url ${url}`);
                     }
                     this.logger.info(`Retry ${url}`);
-                    body = await this.getData(url, options);
+                    response = await this.sendRequest(url, options);
+                    body = await response.text();
                 } else {
                     break;
                 }
@@ -58,8 +60,8 @@ class Client implements ClientInterface {
         return new fetch.Response(body, responseOptions);
     }
 
-    private getData(url: string, options?: any): Promise<string> {
-        return fetch(url, options).then((r: Response) => r.text());
+    private sendRequest(url: string, options?: any): Promise<Response> {
+        return fetch(url, options);
     }
 }
 

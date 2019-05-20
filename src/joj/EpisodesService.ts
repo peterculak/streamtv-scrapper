@@ -68,6 +68,7 @@ class EpisodesService implements EpisodesServiceInterface {
                     this.logger.error(`No iframe url found ${episode.url}`);
                 } else {
                     this.logger.info(`Fetching ${iframeUrl}`);
+                    //todo replace fetch by client
                     return fetch(iframeUrl)
                         .then((r: any) => r.text())
                         .then((content: string) => this.filesystem.writeFile(`${seriesDir}/iframes`, `${episode.episode}.html`, content))

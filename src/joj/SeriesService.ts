@@ -7,7 +7,6 @@ import ExtractorServiceInterface from "./ExtractorServiceInterface";
 import FileSystemInterface from "../FileSystemInterface";
 import LoggerInterface from "../LoggerInterface";
 import ClientInterface from "../ClientInterface";
-const fetch = require('node-fetch');
 
 @injectable()
 class SeriesService implements SeriesServiceInterface {
@@ -57,8 +56,7 @@ class SeriesService implements SeriesServiceInterface {
 
     private getSeriesPagesMeta(seriesArchiveUrl: string): Promise<Array<{ seriesUrl: string, url: string, title: string }>> {
         let seriesUrl: string;
-
-        return fetch(seriesArchiveUrl)
+        return this.client.fetch(seriesArchiveUrl)
             .then((r: any) => {
                 seriesUrl = r.url;
                 return r.text();
