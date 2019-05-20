@@ -6,9 +6,9 @@ import ExtractorServiceInterface from "./joj/ExtractorServiceInterface";
 import SeriesServiceInterface from "./joj/SeriesServiceInterface";
 import * as Pino from "pino";
 import FileSystemInterface from "./FileSystemInterface";
+import EpisodesServiceInterface from "./joj/EpisodesServiceInterface";
 
 const chalk = require('chalk');
-const clear = require('clear');
 const figlet = require('figlet');
 const path = require('path');
 const program = require('commander');
@@ -45,6 +45,7 @@ program
     .description("CLI for scrapping TV channels")
 
     .option('-f, --fetch', 'When true it will fetch cache, when false it will compile json from cache')
+    .option('-s, --sequenceMode', 'Fetches episode pages in sequence not to hammer api')
     .option('-c, --compile', 'When true it will compile json from cache')
     .option('-x, --pattern [pattern]', 'Regexp pattern. Will fetch archives for all programmes with matching in title')
     .option('-p, --programUrl [program]', 'Fetch all episodes for program url')
@@ -60,6 +61,10 @@ const series = container.get<SeriesServiceInterface>(CONSTANTS.JOJ_SERIES);
 const filesystem = container.get<FileSystemInterface>(CONSTANTS.FILESYSTEM);
 const logger = container.get<Pino.Logger>(CONSTANTS.PINO_LOGGER);
 logger.level = verbosity(program.verbosity);
+
+if (program.sequenceMode) {
+    container.get<EpisodesServiceInterface>(CONSTANTS.JOJ_EPISODES).setFetchSequenceMode();
+}
 
 if (!program.programUrl) {
     const archive = container.get<ArchiveServiceInterface>(CONSTANTS.JOJ_ARCHIVE);

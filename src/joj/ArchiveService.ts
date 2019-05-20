@@ -7,8 +7,8 @@ const _ = require('underscore');
 import ArchiveServiceInterface from "./ArchiveServiceInterface";
 import ExtractorServiceInterface from "./ExtractorServiceInterface";
 import CONSTANTS from "../app/config/constants";
-import * as Pino from "pino";
 import FileSystemInterface from "../FileSystemInterface";
+import LoggerInterface from "../LoggerInterface";
 
 @injectable()
 class ArchiveService implements ArchiveServiceInterface {
@@ -18,7 +18,7 @@ class ArchiveService implements ArchiveServiceInterface {
 
     constructor(
         @inject(CONSTANTS.JOJ_EXTRACTOR) private extractor: ExtractorServiceInterface,
-        @inject(CONSTANTS.PINO_LOGGER) private logger: Pino.Logger,
+        @inject(CONSTANTS.LOGGER) private logger: LoggerInterface,
         @inject(CONSTANTS.FILESYSTEM) private filesystem: FileSystemInterface,
     ) {}
 

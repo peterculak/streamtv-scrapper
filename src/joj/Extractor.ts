@@ -1,6 +1,5 @@
 import {inject, injectable} from "inversify";
 import "reflect-metadata";
-const cheerio = require('cheerio');
 import ExtractorServiceInterface from "./ExtractorServiceInterface";
 import CONSTANTS from "../app/config/constants";
 import FileSystemInterface from "../FileSystemInterface";
@@ -9,8 +8,10 @@ import FileSystemInterface from "../FileSystemInterface";
 class Extractor implements ExtractorServiceInterface {
     private readonly cacheDir: string = './var/cache/joj.sk';
 
-    constructor(@inject(CONSTANTS.FILESYSTEM) private filesystem: FileSystemInterface) {
-    }
+    constructor(
+        @inject(CONSTANTS.FILESYSTEM) private filesystem: FileSystemInterface,
+        @inject(CONSTANTS.CHEERIO) private dom: CheerioAPI
+    ) {}
 
     extract(): Promise<Array<{title: string, img: string, url: string}>> {
         return this.filesystem.readFile(`${this.cacheDir}/archiv.html`)
@@ -18,7 +19,7 @@ class Extractor implements ExtractorServiceInterface {
     }
 
     public extractArchive(content: string): Array<{title: string, img: string, url: string}> {
-        const $ = cheerio.load(content);
+        const $ = this.dom.load(content);
         const archive: Array<{title: string, img: string, url: string}> = [];
 
         $('div.b-i-archive-list > div.row').each(function (i: number, elem: any) {
@@ -33,14 +34,17 @@ class Extractor implements ExtractorServiceInterface {
     }
 
     public seriesArchiveUrl(content: string): string {
-        const $ = cheerio.load(content);
+        const $ = this.dom.load(content);
         const a = $('.e-subnav-wrap a[title*="Arch"]');
         return a.length ? a.attr('href'): '';
     }
 
     public seriesPagesMetaData(content: string): Array<{ id: string, title: string }> {
-        const $ = cheerio.load(content);
-        const row = $('.e-subnav-wrap').html();
+        const $ = this.dom.load(content);
+        let row = $('.e-subnav-wrap').html();
+        if (row === null || row === undefined) {
+            row = '';
+        }
         const meta: Array<{ id: string, title: string }> = [];
         $('div.e-select > select > option', row).each((i: number, elem: any) => {
             meta.push({id: $(elem).val(), title: $(elem).text().trim()});
@@ -50,18 +54,28 @@ class Extractor implements ExtractorServiceInterface {
     }
 
     public episodesList(content: string): Array<{title: string, url: string, img: string, date: string, episode: number}> {
-        const $ = cheerio.load(content);
+        const $ = this.dom.load(content);
         const episodes: Array<{title: string, url: string, img: string, date: string, episode: number}> = [];
         $('.e-mobile-article-p article').each((i: number, elem: any) => {
             const a = $('a', elem);
             const subtitle = $('h4.subtitle', elem);
 
+            let date = $('span.date', subtitle).first().html();
+            if (date === undefined || date === null) {
+                date = '';
+            }
+            let episodeString = $('span.date', subtitle).last().html();
+            let episode = 0;
+            if (episodeString) {
+                episode = parseInt(episodeString.split(':')[1]);
+            }
+
             episodes.push({
                 title: a.attr('title'),
                 url: a.attr('href'),
                 img: $('img', a).attr('data-original'),
-                date: $('span.date', subtitle).first().html(),
-                episode: parseInt($('span.date', subtitle).last().html().split(':')[1]),
+                date: date,
+                episode: episode,
             });
         });
 
@@ -69,25 +83,30 @@ class Extractor implements ExtractorServiceInterface {
     }
 
     public loadMoreEpisodesLink(content: string): string {
-        const $ = cheerio.load(content);
+        const $ = this.dom.load(content);
         const a = $('a[title="Načítaj viac"]');
         return a.length ? a.attr('href') : '';
     }
 
     public moreEpisodes(content: string): string {
-        const $ = cheerio.load(content);
-        return $('.row.scroll-item').html();
+        const $ = this.dom.load(content);
+        const html = $('.row.scroll-item').html();
+        if (html === null || html === undefined) {
+            return '';
+        }
+
+        return html;
     }
 
     public appendEpisodes(content: string, moreContent: string): string {
-        const $ = cheerio.load(content);
+        const $ = this.dom.load(content);
         $('a[title="Načítaj viac"]').parent().replaceWith(moreContent);
 
         return $.html();
     }
 
     public episodeIframeUrl(content: string): string {
-        const $ = cheerio.load(content);
+        const $ = this.dom.load(content);
         const iframes = $('section.s-video-detail iframe');
         let url = '';
         if (iframes) {
@@ -103,19 +122,24 @@ class Extractor implements ExtractorServiceInterface {
     }
 
     public episodeSchemaOrgMeta(content: string): Array<string> {
-        const $ = cheerio.load(content, {xmlMode: false});
-        return JSON.parse($('script[type="application/ld+json"]').html());
+        const $ = this.dom.load(content, {xmlMode: false});
+        let string = $('script[type="application/ld+json"]').html();
+        if (string === null || string === undefined) {
+            string = '';
+        }
+        return JSON.parse(string);
     }
 
     public episodeMp4Urls(content: string): Array<string> {
-        const $ = cheerio.load(content);
+        const $ = this.dom.load(content);
         const scripts = $('script');
 
         const filtered = scripts.filter((i: number, e: any) => {
             const html = $(e).html();
             if (html && html.length) {
                 const m  = html && html.match(/var src\s=\s{.*?(mp4).*?}/gs);
-                return m && m.length > 0;
+                const ret = m && m.length > 0;
+                return Boolean(ret).valueOf();
             }
 
             return false;

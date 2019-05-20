@@ -4,15 +4,17 @@ const fetch = require('node-fetch');
 import EpisodesServiceInterface from "./EpisodesServiceInterface";
 import ExtractorServiceInterface from "./ExtractorServiceInterface";
 import CONSTANTS from "../app/config/constants";
-import * as Pino from "pino";
 import FileSystemInterface from "../FileSystemInterface";
+import LoggerInterface from "../LoggerInterface";
 
 @injectable()
 class EpisodesService implements EpisodesServiceInterface {
 
+    private fetchSequenceMode: boolean = false;
+
     constructor(
         @inject(CONSTANTS.JOJ_EXTRACTOR) private extractor: ExtractorServiceInterface,
-        @inject(CONSTANTS.PINO_LOGGER) private logger: Pino.Logger,
+        @inject(CONSTANTS.LOGGER) private logger: LoggerInterface,
         @inject(CONSTANTS.FILESYSTEM) private filesystem: FileSystemInterface,
     ) {
     }
@@ -32,6 +34,10 @@ class EpisodesService implements EpisodesServiceInterface {
         })));
     }
 
+    setFetchSequenceMode() {
+        this.fetchSequenceMode = true;
+    }
+
     private getData(url: string): Promise<any> {
         this.logger.info(`Fetching ${url}`);
         return fetch(url)
@@ -47,7 +53,21 @@ class EpisodesService implements EpisodesServiceInterface {
     }
 
     private cacheEpisodePages(seriesDir: string, episodePages: Array<{ url: string, title: string, episode: number, date: string }>): Promise<any> {
-        return Promise.all(episodePages.map((episode: any) => this.getData(episode.url)
+        this.logger.debug(`Fetch mode: ${this.fetchMode()}`);
+
+        if (this.fetchSequenceMode) {
+            return episodePages.reduce((promiseChain: any, currentTask: any) => {
+                return promiseChain.then((chainResults: any) => {
+                    return this.cacheEpisodePage(seriesDir, currentTask).then((currentResult: any) => [...chainResults, currentResult]);
+                });
+            }, Promise.resolve([]));
+        }
+
+        return Promise.all(episodePages.map((episode: any) => this.cacheEpisodePage(seriesDir, episode)));
+    }
+
+    private cacheEpisodePage(seriesDir: string, episode: any) {
+        return this.getData(episode.url)
             .then((content: string) => {//this caches page which contains url to video iframe
                 this.filesystem.writeFile(seriesDir, `${episode.episode}.html`, content);
                 return content;
@@ -65,9 +85,13 @@ class EpisodesService implements EpisodesServiceInterface {
                         ;
                 }
             })
-            .catch((error: Error) => this.logger.error(error.toString()))
-        ));
+            .catch((error: Error) => this.logger.error(error.toString()));
+    }
+
+    private fetchMode() {
+        return this.fetchSequenceMode ? 'sequence' : 'parallel';
     }
 }
+
 
 export default EpisodesService;

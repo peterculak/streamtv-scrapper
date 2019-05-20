@@ -2,14 +2,14 @@ import {inject, injectable} from "inversify";
 import "reflect-metadata";
 import FileSystemInterface from "./FileSystemInterface";
 import CONSTANTS from "./app/config/constants";
-import * as Pino from "pino";
+import LoggerInterface from "./LoggerInterface";
 
 const fs = require('fs');
 
 @injectable()
 class FileSystem implements FileSystemInterface {
     constructor(
-        @inject(CONSTANTS.PINO_LOGGER) private logger: Pino.Logger,
+        @inject(CONSTANTS.LOGGER) private logger: LoggerInterface,
     ) {
     }
 

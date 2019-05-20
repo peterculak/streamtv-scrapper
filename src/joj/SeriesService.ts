@@ -4,8 +4,8 @@ import SeriesServiceInterface from "./SeriesServiceInterface";
 import EpisodesServiceInterface from "./EpisodesServiceInterface";
 import CONSTANTS from "../app/config/constants";
 import ExtractorServiceInterface from "./ExtractorServiceInterface";
-import * as Pino from "pino";
 import FileSystemInterface from "../FileSystemInterface";
+import LoggerInterface from "../LoggerInterface";
 const fetch = require('node-fetch');
 
 @injectable()
@@ -13,7 +13,7 @@ class SeriesService implements SeriesServiceInterface {
     constructor(
         @inject(CONSTANTS.JOJ_EPISODES) private episodeService: EpisodesServiceInterface,
         @inject(CONSTANTS.JOJ_EXTRACTOR) private extractor: ExtractorServiceInterface,
-        @inject(CONSTANTS.PINO_LOGGER) private logger: Pino.Logger,
+        @inject(CONSTANTS.LOGGER) private logger: LoggerInterface,
         @inject(CONSTANTS.FILESYSTEM) private filesystem: FileSystemInterface,
     ) {
     }
