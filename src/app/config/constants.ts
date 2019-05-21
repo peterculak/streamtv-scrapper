@@ -8,6 +8,7 @@ const CONSTANTS = {
     CLIENT: Symbol.for("Client"),
     PINO_LOGGER: Symbol.for("PinoLogger"),
     CHEERIO: Symbol.for("Cheerio"),
+    UNDERSCORE: Symbol.for("Underscore"),
 };
 
 export default CONSTANTS;

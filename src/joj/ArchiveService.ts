@@ -1,7 +1,7 @@
 import {inject, injectable} from "inversify";
 import "reflect-metadata";
 
-const _ = require('underscore');
+import * as Underscore from "underscore";
 import ArchiveServiceInterface from "./ArchiveServiceInterface";
 import ExtractorServiceInterface from "./ExtractorServiceInterface";
 import CONSTANTS from "../app/config/constants";
@@ -20,6 +20,7 @@ class ArchiveService implements ArchiveServiceInterface {
         @inject(CONSTANTS.LOGGER) private logger: LoggerInterface,
         @inject(CONSTANTS.FILESYSTEM) private filesystem: FileSystemInterface,
         @inject(CONSTANTS.CLIENT) private client: ClientInterface,
+        @inject(CONSTANTS.UNDERSCORE) private _: Underscore.UnderscoreStatic,
     ) {}
 
     cacheArchiveList(): Promise<any> {
@@ -96,7 +97,7 @@ class ArchiveService implements ArchiveServiceInterface {
                         meta.mp4 = this.extractor.episodeMp4Urls(iframeFile.content);
 
                         if (!meta.mp4.length) {//possibly other format
-                            this.logger.error(`Mp4 urls not found in ${iframeFileSource}`);
+                            throw new Error(`Mp4 urls not found in ${iframeFileSource}`);
                         }
                         return meta;
                     });
@@ -106,7 +107,9 @@ class ArchiveService implements ArchiveServiceInterface {
     }
 
     private groupEpisodesBySeason(archive: Array<any>): Array<any> {
-        return _.groupBy(archive, (item: { partOfSeason: { seasonNumber: number } }) => item.partOfSeason.seasonNumber);
+        return this._.toArray(
+            this._.groupBy(archive, (item: { partOfSeason: { seasonNumber: number } }) => item.partOfSeason.seasonNumber)
+        );
     }
 }
 
