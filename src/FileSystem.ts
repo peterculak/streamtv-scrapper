@@ -44,7 +44,7 @@ class FileSystem implements FileSystemInterface {
         });
     }
 
-    sync(pattern: string, options: {}): string[] {
+    sync(pattern: string, options?: {}): string[] {
         return glob.sync(pattern, options);
     }
 }

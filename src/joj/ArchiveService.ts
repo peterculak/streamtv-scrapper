@@ -71,11 +71,12 @@ class ArchiveService implements ArchiveServiceInterface {
         const files = this.filesystem.sync("**(!iframes)/*.html", {cwd: seriesDir});
 
         return Promise.all(files.map((file: string) => this.episodeMetaData(`${seriesDir}/${file}`)))
-            .then((archive: Array<any>) =>
+            .then((archive: Array<any>) => archive.filter((item: any) => item !== undefined))
+            .then((filteredArchive: Array<any>) =>
                 this.filesystem.writeFile(
                     jsonDir,
                     `${slug}.json`,
-                    JSON.stringify(this.groupEpisodesBySeason(archive))
+                    JSON.stringify(this.groupEpisodesBySeason(filteredArchive))
                 )
             );
     }
@@ -102,7 +103,7 @@ class ArchiveService implements ArchiveServiceInterface {
                         return meta;
                     });
             })
-            .catch((error: Error) => this.logger.fatal(`${error} in ${file}`))
+            .catch((error: Error) => this.logger.fatal(error))
             ;
     }
 

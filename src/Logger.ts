@@ -11,28 +11,28 @@ class Logger implements LoggerInterface {
     ) {
     }
 
-    debug(message: any) {
-        this.pino.debug(message);
+    fatal(message: any) {
+        this.pino.fatal(message);
     }
 
     error(message: any) {
         this.pino.error(message)
     }
 
-    fatal(message: any) {
-        this.pino.fatal(message);
+    warn(message: any) {
+        this.pino.warn(message);
     }
 
     info(message: any) {
         this.pino.info(message);
     }
 
-    trace(message: any) {
-        this.pino.trace(message);
+    debug(message: any) {
+        this.pino.debug(message);
     }
 
-    warn(message: any) {
-        this.pino.warn(message);
+    trace(message: any) {
+        this.pino.trace(message);
     }
 }
 
