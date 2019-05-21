@@ -1,7 +1,6 @@
 import {inject, injectable} from "inversify";
 import "reflect-metadata";
 
-const glob = require("glob");
 const _ = require('underscore');
 import ArchiveServiceInterface from "./ArchiveServiceInterface";
 import ExtractorServiceInterface from "./ExtractorServiceInterface";
@@ -44,7 +43,7 @@ class ArchiveService implements ArchiveServiceInterface {
     }
 
     compileArchive(): Promise<any> {
-        const directories = glob.sync(`${this.cacheDir}/*/`);
+        const directories = this.filesystem.sync(`${this.cacheDir}/*/`);
         this.logger.info(`Found ${directories.length} cached program folders`);
 
         return directories.map((directory: string) => {
@@ -68,7 +67,7 @@ class ArchiveService implements ArchiveServiceInterface {
         const seriesDir = `${this.cacheDir}/${slug}/series`;
         const jsonDir = `${this.cacheDir}/${slug}`;
         this.logger.info(`Series dir ${seriesDir}`);
-        const files = glob.sync("**(!iframes)/*.html", {cwd: seriesDir});
+        const files = this.filesystem.sync("**(!iframes)/*.html", {cwd: seriesDir});
 
         return Promise.all(files.map((file: string) => this.episodeMetaData(`${seriesDir}/${file}`)))
             .then((archive: Array<any>) =>
@@ -97,11 +96,12 @@ class ArchiveService implements ArchiveServiceInterface {
                         meta.mp4 = this.extractor.episodeMp4Urls(iframeFile.content);
 
                         if (!meta.mp4.length) {//possibly other format
-                            this.logger.warn(`Mp4 urls not found in ${iframeFileSource}`);
+                            this.logger.error(`Mp4 urls not found in ${iframeFileSource}`);
                         }
                         return meta;
                     });
             })
+            .catch((error: Error) => this.logger.fatal(`${error} in ${file}`))
             ;
     }
 

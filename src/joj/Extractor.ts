@@ -145,8 +145,6 @@ class Extractor implements ExtractorServiceInterface {
             return false;
         });
 
-
-
         const html = $(filtered[0]).html();
         const m  = html && html.match(/var src\s=\s{.*?(mp4).*?}/gs);
         if (!m) {

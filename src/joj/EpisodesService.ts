@@ -1,6 +1,5 @@
 import {inject, injectable} from "inversify";
 import "reflect-metadata";
-const fetch = require('node-fetch');
 import EpisodesServiceInterface from "./EpisodesServiceInterface";
 import ExtractorServiceInterface from "./ExtractorServiceInterface";
 import CONSTANTS from "../app/config/constants";
@@ -64,24 +63,20 @@ class EpisodesService implements EpisodesServiceInterface {
             .then((content: string) => {//this caches final iframes which contain video urls
                 const iframeUrl = this.extractor.episodeIframeUrl(content);
                 if (!iframeUrl) {
-                    //todo this needs to return promise with something
-                    this.logger.error(`No iframe url found ${episode.url}`);
-                } else {
-                    this.logger.info(`Fetching ${iframeUrl}`);
-                    //todo replace fetch by client
-                    return fetch(iframeUrl)
-                        .then((r: any) => r.text())
-                        .then((content: string) => this.filesystem.writeFile(`${seriesDir}/iframes`, `${episode.episode}.html`, content))
-                        ;
+                    throw new Error(`No iframe url found ${episode.url}`);
                 }
+
+                return this.client.fetch(iframeUrl)
+                    .then((r: any) => r.text())
+                    .then((content: string) => this.filesystem.writeFile(`${seriesDir}/iframes`, `${episode.episode}.html`, content))
+                    ;
             })
-            .catch((error: Error) => this.logger.error(error.toString()));
+            .catch((error: Error) => this.logger.fatal(error.toString()));
     }
 
     private fetchMode() {
         return this.fetchSequenceMode ? 'sequence' : 'parallel';
     }
 }
-
 
 export default EpisodesService;

@@ -46,7 +46,6 @@ class SeriesService implements SeriesServiceInterface {
                 let seriesArchiveUrl = this.extractor.seriesArchiveUrl(r.content);
                 if (!seriesArchiveUrl) {
                     seriesArchiveUrl = url;
-
                 }
                 return this.getSeriesPagesMeta(seriesArchiveUrl);
             })
@@ -78,12 +77,14 @@ class SeriesService implements SeriesServiceInterface {
     }
 
     private cacheSeriesPages(programDir: string, seriesPages: Array<{ seriesUrl: string, url: string, title: string }>): Promise<any[]> {
-        return Promise.all(seriesPages.map((series: { seriesUrl: string, url: string, title: string }) => this.client.fetch(series.url)
-            .then((r: any) => r.text())
-
-            .then((content: string) => this.loadMoreEpisodes(series.seriesUrl, content))
-            .then((content: string) => this.filesystem.writeFile(`${programDir}/series`, `${series.title.replace('/', '-')}.html`, content))
-            .then((r: any) => this.episodeService.cacheSeriesEpisodes([r.file]))));
+        return Promise.all(
+            seriesPages.map((series: { seriesUrl: string, url: string, title: string }) =>
+                this.client.fetch(series.url)
+                    .then((r: any) => r.text())
+                    .then((content: string) => this.loadMoreEpisodes(series.seriesUrl, content))
+                    .then((content: string) => this.filesystem.writeFile(`${programDir}/series`, `${series.title.replace('/', '-')}.html`, content))
+                    .then((r: any) => this.episodeService.cacheSeriesEpisodes([r.file]))
+            ));
     }
 
     private loadMoreEpisodes(seriesUrl: string, content: string): Promise<string> {

@@ -13,7 +13,7 @@ import EpisodesServiceInterface from "../../joj/EpisodesServiceInterface";
 import EpisodesService from "../../joj/EpisodesService";
 
 import * as Pino from "pino";
-import * as CheerioAPI from "cheerio";
+import CheerioAPI from "cheerio";
 import FileSystemInterface from "../../FileSystemInterface";
 import FileSystem from "../../FileSystem";
 import LoggerInterface from "../../LoggerInterface";

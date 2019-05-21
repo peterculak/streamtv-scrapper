@@ -3,12 +3,12 @@ import "reflect-metadata";
 import ClientInterface from "./ClientInterface";
 import CONSTANTS from "./app/config/constants";
 import LoggerInterface from "./LoggerInterface";
-const fetch = require('node-fetch');
+import * as fetch from "node-fetch";
 
 @injectable()
 class Client implements ClientInterface {
 
-    private retry: number = 3;
+    private maxTries: number = 3;
 
     constructor(@inject(CONSTANTS.LOGGER) private logger: LoggerInterface) {
     }
@@ -16,52 +16,45 @@ class Client implements ClientInterface {
     async fetch(url: string, options?: any): Promise<any> {
         this.logger.info(`Fetching ${url}`);
 
-        let retry = options && options.retry || this.retry;
-        let response: Response = new fetch.Response();
+        let currentTry = 0;
+        let response: fetch.Response = new fetch.Response();
         let body: string = '';
 
-        while (retry > 0) {
+        while (currentTry < this.maxTries) {
+            currentTry++;
             try {
                 response = await this.sendRequest(url, options);
                 body = await response.text();
-                if (body.match(/Server Error/gs) || body.match(/502 Bad Gateway/gs)) {
+                if (this.isContentError(body)) {
                     this.logger.warn(`Server error for ${url}`);
-                    retry = retry - 1;
-                    if (retry === 0) {
-                        this.logger.error(`Retry limit of ${retry} reached for url ${url}`);
-                        throw new Error(`Retry limit of ${retry} reached for url ${url}`);
+                    if (currentTry >= this.maxTries) {
+                        throw new Error(`Retry limit of ${this.maxTries} reached for url ${url}`);
                     }
-                    this.logger.info(`Retry ${url}`);
-                    response = await this.sendRequest(url, options);
-                    body = await response.text();
+                    this.logger.info(`Retry ${currentTry} ${url}`);
                 } else {
                     break;
                 }
             } catch(e) {
-                retry = retry - 1;
-                if (retry === 0) {
-                    this.logger.error(`Retry limit of ${retry} reached for url ${url}`);
-                    throw e
+                if (currentTry >= this.maxTries) {
+                    throw new Error(`Retry limit of ${this.maxTries} reached for url ${url}`);
                 }
             }
         }
 
-        if (body.match(/Server Error/gs) || body.match(/502 Bad Gateway/gs)) {
-            throw new Error(`Retry limit of ${retry} reached for url ${url}`);
-        }
-
-        const responseOptions = {
+        return new fetch.Response(body, {
             url: response.url,
             status: response.status,
             statusText: response.statusText,
             headers: response.headers,
-        };
-
-        return new fetch.Response(body, responseOptions);
+        });
     }
 
-    private sendRequest(url: string, options?: any): Promise<Response> {
-        return fetch(url, options);
+    private isContentError(body: string): boolean {
+        return body !=='' && Boolean(body.match(/(Server Error|502 Bad Gateway|video už nie je možné prehrať)/gs));
+    }
+
+    private sendRequest(url: string, options?: any): Promise<fetch.Response> {
+        return fetch.default(url, options);
     }
 }
 

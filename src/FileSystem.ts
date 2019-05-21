@@ -3,7 +3,7 @@ import "reflect-metadata";
 import FileSystemInterface from "./FileSystemInterface";
 import CONSTANTS from "./app/config/constants";
 import LoggerInterface from "./LoggerInterface";
-
+const glob = require("glob");
 const fs = require('fs');
 
 @injectable()
@@ -44,6 +44,9 @@ class FileSystem implements FileSystemInterface {
         });
     }
 
+    sync(pattern: string, options: {}): string[] {
+        return glob.sync(pattern, options);
+    }
 }
 
 export default FileSystem;
