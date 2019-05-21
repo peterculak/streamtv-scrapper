@@ -50,7 +50,8 @@ class Client implements ClientInterface {
     }
 
     private isContentError(body: string): boolean {
-        return body !=='' && Boolean(body.match(/(Server Error|502 Bad Gateway|video už nie je možné prehrať)/gs));
+        return body !== ''
+            && Boolean(body.match(/(Server Error|502 Bad Gateway|video už nie je možné prehrať)/gs));
     }
 
     private sendRequest(url: string, options?: any): Promise<fetch.Response> {

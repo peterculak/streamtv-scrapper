@@ -23,10 +23,14 @@ class ArchiveService implements ArchiveServiceInterface {
         @inject(CONSTANTS.UNDERSCORE) private _: Underscore.UnderscoreStatic,
     ) {}
 
-    cacheArchiveList(): Promise<any> {
+    cacheArchiveList(): Promise<Array<{}>> {
         return this.client.fetch(this.archiveUrl)
             .then((r: any) => r.text())
-            .then((body: string) => this.filesystem.writeFile(this.cacheDir, 'archiv.html', body));
+            .then((body: string) => this.filesystem.writeFile(this.cacheDir, 'archiv.html', body))
+            .then((file: {file: string, content: string}) => this.extractor.extractArchive(file.content))
+            .then((archive: Array<{}>) => this.filesystem.writeFile(this.cacheDir, 'archive.json', JSON.stringify(archive)))
+            .then((file: {file: string, content: string}) => JSON.parse(file.content))
+            ;
     }
 
     compileArchiveForProgram(url: string): Promise<Array<any>> {
@@ -85,15 +89,21 @@ class ArchiveService implements ArchiveServiceInterface {
         this.logger.debug(`Episode meta data file ${file}`);
 
         return this.filesystem.readFile(file)
-            .then((file: { content: string, name: string }) => this.extractor.episodeSchemaOrgMeta(file.content))
+            .then((file: { content: string, name: string }) => {
+                if (!file.content) {
+                    throw new Error(`Episode file ${file.name} was empty`);
+                }
+                return this.extractor.episodeSchemaOrgMeta(file.content);
+            })
             .then((meta: any) => {
                 const seriesPath = file.substr(0, file.lastIndexOf('/'));
                 const bits = file.split('/');
-                const serieFileName = bits[bits.length - 1];
-                const iframeFileSource = `${seriesPath}/iframes/${serieFileName}`;
+                const episodeFileName = bits[bits.length - 1];
+                const iframeFileSource = `${seriesPath}/iframes/${episodeFileName}`;
 
                 this.logger.debug(`Iframe file ${iframeFileSource}`);
-                return this.filesystem.readFile(`${seriesPath}/iframes/${serieFileName}`)
+
+                return this.filesystem.readFile(`${seriesPath}/iframes/${episodeFileName}`)
                     .then((iframeFile: { content: string, name: string }) => {
                         meta.mp4 = this.extractor.episodeMp4Urls(iframeFile.content);
 
@@ -103,7 +113,7 @@ class ArchiveService implements ArchiveServiceInterface {
                         return meta;
                     });
             })
-            .catch((error: Error) => this.logger.fatal(error))
+            .catch((error: Error) => this.logger.error(error.message))
             ;
     }
 

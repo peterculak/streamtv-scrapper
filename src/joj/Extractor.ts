@@ -2,21 +2,12 @@ import {inject, injectable} from "inversify";
 import "reflect-metadata";
 import ExtractorServiceInterface from "./ExtractorServiceInterface";
 import CONSTANTS from "../app/config/constants";
-import FileSystemInterface from "../FileSystemInterface";
 
 @injectable()
 class Extractor implements ExtractorServiceInterface {
-    private readonly cacheDir: string = './var/cache/joj.sk';
-
     constructor(
-        @inject(CONSTANTS.FILESYSTEM) private filesystem: FileSystemInterface,
         @inject(CONSTANTS.CHEERIO) private dom: CheerioAPI
     ) {}
-
-    extract(): Promise<Array<{title: string, img: string, url: string}>> {
-        return this.filesystem.readFile(`${this.cacheDir}/archiv.html`)
-            .then((file: {content: string, name: string}) => this.extractArchive(file.content));
-    }
 
     public extractArchive(content: string): Array<{title: string, img: string, url: string}> {
         const $ = this.dom.load(content);

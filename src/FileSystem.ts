@@ -14,6 +14,10 @@ class FileSystem implements FileSystemInterface {
     }
 
     readFile(fileName: string): Promise<{content: string, name: string}> {
+        if (!fs.existsSync(fileName)) {
+            throw new Error(`File ${fileName} does not exist`);
+        }
+
         return new Promise((resolve, reject) => {
             fs.readFile(fileName, (err: Error, data: Object) => {
                 if (err) {
