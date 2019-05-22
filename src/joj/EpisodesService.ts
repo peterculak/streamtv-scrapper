@@ -6,11 +6,12 @@ import CONSTANTS from "../app/config/constants";
 import FileSystemInterface from "../FileSystemInterface";
 import LoggerInterface from "../LoggerInterface";
 import ClientInterface from "../ClientInterface";
+const Bluebird = require("bluebird");
 
 @injectable()
 class EpisodesService implements EpisodesServiceInterface {
 
-    private fetchSequenceMode: boolean = false;
+    private concurrency: number = 0;
 
     constructor(
         @inject(CONSTANTS.JOJ_EXTRACTOR) private extractor: ExtractorServiceInterface,
@@ -35,22 +36,16 @@ class EpisodesService implements EpisodesServiceInterface {
         })));
     }
 
-    setFetchSequenceMode() {
-        this.fetchSequenceMode = true;
+    setConcurrency(concurrency: number): void {
+        this.concurrency = concurrency;
     }
 
     private cacheEpisodePages(seriesDir: string, episodePages: Array<{ url: string, title: string, episode: number, date: string }>): Promise<any> {
-        this.logger.debug(`Fetch mode: ${this.fetchMode()}`);
-
-        if (this.fetchSequenceMode) {
-            return episodePages.reduce((promiseChain: any, currentTask: any) => {
-                return promiseChain.then((chainResults: any) => {
-                    return this.cacheEpisodePage(seriesDir, currentTask).then((currentResult: any) => [...chainResults, currentResult]);
-                });
-            }, Promise.resolve([]));
-        }
-
-        return Promise.all(episodePages.map((episode: any) => this.cacheEpisodePage(seriesDir, episode)));
+        return Bluebird.map(
+            episodePages,
+            (episode: any) => this.cacheEpisodePage(seriesDir, episode),
+            { concurrency: this.concurrency }
+        );
     }
 
     private cacheEpisodePage(seriesDir: string, episode: any) {
@@ -72,10 +67,6 @@ class EpisodesService implements EpisodesServiceInterface {
                     ;
             })
             .catch((error: Error) => this.logger.fatal(error.toString()));
-    }
-
-    private fetchMode() {
-        return this.fetchSequenceMode ? 'sequence' : 'parallel';
     }
 }
 

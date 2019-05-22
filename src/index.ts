@@ -25,8 +25,8 @@ program
     .version('0.0.1')
     .description("CLI for scrapping TV channels")
     .option('-f, --fetch', 'When true it will fetch cache, when false it will compile json from cache')
-    .option('-s, --sequenceMode', 'Fetches episode pages in sequence not to hammer api')
     .option('-c, --compile', 'When true it will compile json from cache')
+    .option('-r, --concurrency <number>', 'How many concurrent requests to send when fetching episode pages')
     .option('-x, --pattern [pattern]', 'Regexp pattern. Will fetch archives for all programmes with matching in title')
     .option('-p, --programUrl [program]', 'Fetch all episodes for program url')
     .option('-v, --verbosity', 'Verbosity level', increaseVerbosity, 0)
@@ -39,8 +39,8 @@ if (!process.argv.slice(2).length) {
 
 logger.level = verbosity(program.verbosity);
 
-if (program.sequenceMode) {
-    container.get<EpisodesServiceInterface>(CONSTANTS.JOJ_EPISODES).setFetchSequenceMode();
+if (program.concurrency) {
+    container.get<EpisodesServiceInterface>(CONSTANTS.JOJ_EPISODES).setConcurrency(parseFloat(program.concurrency));
 }
 
 if (!program.programUrl) {

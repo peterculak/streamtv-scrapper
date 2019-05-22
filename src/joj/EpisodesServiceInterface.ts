@@ -1,6 +1,6 @@
 interface EpisodesServiceInterface {
     cacheSeriesEpisodes(files: Array<string>): Promise<any>;
-    setFetchSequenceMode(): void;
+    setConcurrency(concurrency: number): void;
 }
 
 export default EpisodesServiceInterface;
