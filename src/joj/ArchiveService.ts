@@ -8,6 +8,7 @@ import CONSTANTS from "../app/config/constants";
 import FileSystemInterface from "../FileSystemInterface";
 import LoggerInterface from "../LoggerInterface";
 import ClientInterface from "../ClientInterface";
+import Slug from "./Slug";
 
 @injectable()
 class ArchiveService implements ArchiveServiceInterface {
@@ -35,13 +36,9 @@ class ArchiveService implements ArchiveServiceInterface {
 
     compileArchiveForProgram(url: string): Promise<Array<any>> {
         this.logger.info(`Compiling json for ${url}`);
-        const bits = url.split('/');
-        let slug = bits.pop();
-        if (slug === 'archiv' || slug === 'o-sutazi' || slug === 'o-relacii') {
-            slug = bits.pop();
-        }
+        const slug = Slug.fromProgramUrl(url);
         if (!slug) {
-            throw Error('Can not determine program name from url');
+            throw Error(`Can not determine slug from url ${url}`);
         }
 
         return this.compileArchiveForSlug(slug);
@@ -52,13 +49,9 @@ class ArchiveService implements ArchiveServiceInterface {
         this.logger.info(`Found ${directories.length} cached program folders`);
 
         return directories.map((directory: string) => {
-            const bits = directory.split('/');
-            let slug = bits[bits.length - 2];
-            if (slug === 'archiv' || slug === 'o-sutazi' || slug === 'o-relacii') {
-                slug = bits[bits.length - 3];
-            }
+            const slug = Slug.fromPath(directory);
             if (!slug) {
-                throw Error('Can not determine program name from url');
+                throw Error(`Can not determine slug from directory ${directory}`);
             }
             return slug;
         }).reduce((promiseChain: any, currentTask: any) => {

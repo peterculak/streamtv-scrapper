@@ -7,12 +7,13 @@ import ExtractorServiceInterface from "./ExtractorServiceInterface";
 import FileSystemInterface from "../FileSystemInterface";
 import LoggerInterface from "../LoggerInterface";
 import ClientInterface from "../ClientInterface";
+import Slug from "./Slug";
 
 @injectable()
 class SeriesService implements SeriesServiceInterface {
     constructor(
         @inject(CONSTANTS.JOJ_EPISODES) private episodeService: EpisodesServiceInterface,
-        @inject(CONSTANTS.JOJ_EXTRACTOR) private extractor: ExtractorServiceInterface,
+        @inject(CONSTANTS.JOJ_EXTRACTOR) private dom: ExtractorServiceInterface,
         @inject(CONSTANTS.LOGGER) private logger: LoggerInterface,
         @inject(CONSTANTS.FILESYSTEM) private filesystem: FileSystemInterface,
         @inject(CONSTANTS.CLIENT) private client: ClientInterface,
@@ -28,13 +29,9 @@ class SeriesService implements SeriesServiceInterface {
     }
 
     cacheProgramSeriesIndexPagesForProgram(url: string): Promise<any> {
-        const bits = url.split('/');
-        let slug = bits.pop();
-        if (slug === 'archiv' || slug === 'o-sutazi' || slug === 'o-relacii') {
-            slug = bits.pop();
-        }
+        const slug = Slug.fromProgramUrl(url);
         if (!slug) {
-            throw Error('Can not determine program name from url');
+            throw Error(`Can not determine slug from url ${url}`);
         }
 
         const programDir = `./var/cache/joj.sk/${slug}`;
@@ -43,7 +40,7 @@ class SeriesService implements SeriesServiceInterface {
             .then((r: any) => r.text())
             .then((body: string) => this.filesystem.writeFile(programDir, 'index.html', body))
             .then((r: { content: string, file: string }) => {
-                let seriesArchiveUrl = this.extractor.seriesArchiveUrl(r.content);
+                let seriesArchiveUrl = this.dom.seriesArchiveUrl(r.content);
                 if (!seriesArchiveUrl) {
                     seriesArchiveUrl = url;
                 }
@@ -61,13 +58,13 @@ class SeriesService implements SeriesServiceInterface {
                 return r.text();
             })
             .then((content: string) => {
-                const meta = this.extractor.seriesPagesMetaData(content);
+                const meta = this.dom.seriesPagesMetaData(content);
                 if (!meta.length) {
                     return [{title: '1. séria', url: seriesArchiveUrl, seriesUrl: seriesUrl}];
                 }
 
                 return meta.map((elem: { id: string, title: string }) => {
-                    return {
+                    return {//todo could be object
                         title: elem.title,
                         url: elem.id ? `${seriesUrl}?seasonId=${elem.id}` : seriesUrl,
                         seriesUrl: seriesUrl,
@@ -101,15 +98,15 @@ class SeriesService implements SeriesServiceInterface {
 
     private appendMoreEpisodes(originalContent: string, moreContent: string): string {
         //todo extractor break down into multiple classes or rename it to something like DOM
-        return this.extractor.appendEpisodes(
+        return this.dom.appendEpisodes(
             originalContent,
-            this.extractor.moreEpisodes(moreContent)
+            this.dom.moreEpisodes(moreContent)
         );
     }
 
     private loadMoreEpisodesUrl(seriesUrl: string, content: string): string {
         //is relative url coming from content
-        const loadMoreEpisodesLink = this.extractor.loadMoreEpisodesLink(content);
+        const loadMoreEpisodesLink = this.dom.loadMoreEpisodesLink(content);
 
         if (!loadMoreEpisodesLink) {
             return '';

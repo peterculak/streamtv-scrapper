@@ -66,7 +66,7 @@ class EpisodesService implements EpisodesServiceInterface {
                     .then((content: string) => this.filesystem.writeFile(`${seriesDir}/iframes`, `${episode.episode}.html`, content))
                     ;
             })
-            .catch((error: Error) => this.logger.fatal(error.toString()));
+            .catch((error: Error) => this.logger.error(error.toString()));
     }
 }
 
