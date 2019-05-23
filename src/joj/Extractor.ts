@@ -2,6 +2,8 @@ import {inject, injectable} from "inversify";
 import "reflect-metadata";
 import ExtractorServiceInterface from "./ExtractorServiceInterface";
 import CONSTANTS from "../app/config/constants";
+import {ArchiveIndexInterface} from "./ArchiveIndexInterface";
+import Slug from "./Slug";
 
 @injectable()
 class Extractor implements ExtractorServiceInterface {
@@ -9,15 +11,17 @@ class Extractor implements ExtractorServiceInterface {
         @inject(CONSTANTS.CHEERIO) private dom: CheerioAPI
     ) {}
 
-    public extractArchive(content: string): Array<{title: string, img: string, url: string}> {
+    public extractArchive(content: string): ArchiveIndexInterface {
         const $ = this.dom.load(content);
-        const archive: Array<{title: string, img: string, url: string}> = [];
+        const archive: ArchiveIndexInterface = [];
 
         $('div.b-i-archive-list > div.row').each(function (i: number, elem: any) {
+            const url = $('.w-title > a', elem).attr('href');
             archive.push({
                 title: $('.w-title', elem).text().trim(),
                 img: $('.w-title img', elem).attr('data-original'),
-                url: $('.w-title > a', elem).attr('href'),
+                url: url,
+                slug: Slug.fromProgramUrl(url),
             });
         });
 

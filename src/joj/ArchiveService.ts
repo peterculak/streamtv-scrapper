@@ -9,6 +9,7 @@ import FileSystemInterface from "../FileSystemInterface";
 import LoggerInterface from "../LoggerInterface";
 import ClientInterface from "../ClientInterface";
 import Slug from "./Slug";
+import {ArchiveIndexInterface} from "./ArchiveIndexInterface";
 
 @injectable()
 class ArchiveService implements ArchiveServiceInterface {
@@ -24,12 +25,12 @@ class ArchiveService implements ArchiveServiceInterface {
         @inject(CONSTANTS.UNDERSCORE) private _: Underscore.UnderscoreStatic,
     ) {}
 
-    cacheArchiveList(): Promise<Array<{}>> {
+    cacheArchiveList(): Promise<ArchiveIndexInterface> {
         return this.client.fetch(this.archiveUrl)
             .then((r: any) => r.text())
             .then((body: string) => this.filesystem.writeFile(this.cacheDir, 'archiv.html', body))
             .then((file: {file: string, content: string}) => this.extractor.extractArchive(file.content))
-            .then((archive: Array<{}>) => this.filesystem.writeFile(this.cacheDir, 'archive.json', JSON.stringify(archive)))
+            .then((archive: ArchiveIndexInterface) => this.filesystem.writeFile(this.cacheDir, 'archive.json', JSON.stringify(archive)))
             .then((file: {file: string, content: string}) => JSON.parse(file.content))
             ;
     }

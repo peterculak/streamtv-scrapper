@@ -1,5 +1,7 @@
+import {ArchiveIndexInterface} from "./ArchiveIndexInterface";
+
 interface ExtractorServiceInterface {
-    extractArchive(content: string): Array<{title: string, img: string, url: string}>;
+    extractArchive(content: string): ArchiveIndexInterface;
     episodesList(content: string): Array<{title: string, url: string, img: string, date: string, episode: number}>;
     episodeIframeUrl(content: string): string;
     seriesArchiveUrl(content: string): string;
