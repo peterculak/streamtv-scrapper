@@ -10,6 +10,7 @@ import LoggerInterface from "../LoggerInterface";
 import ClientInterface from "../ClientInterface";
 import Slug from "./Slug";
 import {ArchiveIndexInterface} from "./ArchiveIndexInterface";
+import EpisodeInterface from "./EpisodeInterface";
 
 @injectable()
 class ArchiveService implements ArchiveServiceInterface {
@@ -76,10 +77,12 @@ class ArchiveService implements ArchiveServiceInterface {
                     `${slug}.json`,
                     JSON.stringify(this.groupEpisodesBySeason(filteredArchive))
                 )
-            );
+            )
+            .catch((error: Error) => this.logger.error(error.message))
+            ;
     }
 
-    private episodeMetaData(file: string): Promise<Array<{}>> {
+    private episodeMetaData(file: string): Promise<EpisodeInterface> {
         this.logger.debug(`Episode meta data file ${file}`);
 
         return this.filesystem.readFile(file)
@@ -89,7 +92,7 @@ class ArchiveService implements ArchiveServiceInterface {
                 }
                 return this.extractor.episodeSchemaOrgMeta(file.content);
             })
-            .then((meta: any) => {
+            .then((meta: EpisodeInterface) => {
                 const seriesPath = file.substr(0, file.lastIndexOf('/'));
                 const bits = file.split('/');
                 const episodeFileName = bits[bits.length - 1];
@@ -107,7 +110,6 @@ class ArchiveService implements ArchiveServiceInterface {
                         return meta;
                     });
             })
-            .catch((error: Error) => this.logger.error(error.message))
             ;
     }
 
