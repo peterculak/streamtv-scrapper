@@ -3,6 +3,9 @@
 ## install
 npm i
 
+## test
+npm test
+
 ## build
 npm run build
 

@@ -10,10 +10,10 @@ class Slug {
     }
 
     static fromPath(path: string): string {
+        path = path.replace(/\/$/, '');
         const bits = path.split('/');
-        const slug = bits[bits.length - 2];
 
-        return slug;
+        return bits[bits.length - 1];
     }
 }
 
