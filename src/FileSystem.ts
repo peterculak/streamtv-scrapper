@@ -3,53 +3,41 @@ import "reflect-metadata";
 import FileSystemInterface from "./FileSystemInterface";
 import CONSTANTS from "./app/config/constants";
 import LoggerInterface from "./LoggerInterface";
-const glob = require("glob");
-const fs = require('fs');
 
 @injectable()
 class FileSystem implements FileSystemInterface {
     constructor(
+        private fs: any,//todo interface
+        private glob: any,//todo interface
         @inject(CONSTANTS.LOGGER) private logger: LoggerInterface,
     ) {
     }
 
-    readFile(fileName: string): Promise<{content: string, name: string}> {
-        if (!fs.existsSync(fileName)) {
-            throw new Error(`File ${fileName} does not exist`);
+    readFile(filename: string): Promise<{content: string, name: string}> {
+        if (!this.fs.existsSync(filename)) {
+            throw new Error(`File ${filename} does not exist`);
         }
 
-        return new Promise((resolve, reject) => {
-            fs.readFile(fileName, (err: Error, data: Object) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve({content: data.toString(), name: fileName});
-                }
-            })
-        });
+        const buffer = this.fs.readFileSync(filename, "utf8");
+        return new Promise((resolve) => resolve({content: buffer, name: filename}));
     }
 
-    writeFile(dir: string, fileName: string, content: string): Promise<{ content: string, file: string }> {
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, {recursive: true});
+    writeFile(dir: string, filename: string, content: string): Promise<{ content: string, file: string }> {
+        if (!this.fs.existsSync(dir)) {
+            this.fs.mkdirSync(dir, {recursive: true});
         }
 
-        const cacheFile = `${dir}/${fileName}`;
-        return new Promise((resolve, reject) => {
-            fs.writeFile(cacheFile, content, (error: Error) => {
-                if (error) {
-                    this.logger.error(error);
-                    reject();
-                } else {
-                    this.logger.debug(`File saved at ${cacheFile}`);
-                    resolve({ content: content, file: cacheFile });
-                }
-            });
+        const cacheFile = `${dir}/${filename}`;
+        this.fs.writeFileSync(cacheFile, content);//todo error handling
+
+        return new Promise((resolve) => {
+            this.logger.debug(`File saved at ${cacheFile}`);
+            resolve({ content: content, file: cacheFile });
         });
     }
 
     sync(pattern: string, options?: {}): string[] {
-        return glob.sync(pattern, options);
+        return this.glob.sync(pattern, options);
     }
 }
 

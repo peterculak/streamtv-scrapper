@@ -9,7 +9,6 @@ const CONSTANTS = {
     PINO_LOGGER: Symbol.for("PinoLogger"),
     CHEERIO: Symbol.for("Cheerio"),
     UNDERSCORE: Symbol.for("Underscore"),
-    FETCH: Symbol.for("Fetch"),
 };
 
 export default CONSTANTS;
