@@ -5,7 +5,7 @@ import CONSTANTS from "../src/app/config/constants";
 import LoggerInterface from "../src/LoggerInterface";
 import * as Pino from "pino";
 
-const mockPino = () => {};
+const mockPino = () => {};//todo possibly store in __mocks__
 mockPino.fatal = jest.fn();
 mockPino.error = jest.fn();
 mockPino.warn = jest.fn();
@@ -25,13 +25,13 @@ beforeEach(() => {
 
 describe('Logger proxies calls to pino logger', () => {
     test('calls fatal', () => {
-        logger.fatal('message');
+        logger.fatal('fatal message');
         expect(mockPino.fatal).toHaveBeenCalledTimes(1);
         expect(mockPino.fatal.mock.calls[0][0]).toEqual('fatal message');
     });
 
     test('calls error', () => {
-        logger.error('fatal error message');
+        logger.error('error message');
         expect(mockPino.error).toHaveBeenCalledTimes(1);
         expect(mockPino.error.mock.calls[0][0]).toEqual('error message');
     });
