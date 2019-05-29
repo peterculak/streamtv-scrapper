@@ -11,6 +11,7 @@ import ClientInterface from "../ClientInterface";
 import Slug from "./Slug";
 import {ArchiveIndexInterface} from "./ArchiveIndexInterface";
 import EpisodeInterface from "./EpisodeInterface";
+import FileInterface from "../FileInterface";
 
 @injectable()
 class ArchiveService implements ArchiveServiceInterface {
@@ -30,9 +31,9 @@ class ArchiveService implements ArchiveServiceInterface {
         return this.client.fetch(this.archiveUrl)
             .then((r: any) => r.text())
             .then((body: string) => this.filesystem.writeFile(this.cacheDir, 'archiv.html', body))
-            .then((file: {file: string, content: string}) => this.extractor.extractArchive(file.content))
+            .then((file: FileInterface) => this.extractor.extractArchive(file.content))
             .then((archive: ArchiveIndexInterface) => this.filesystem.writeFile(this.cacheDir, 'archive.json', JSON.stringify(archive)))
-            .then((file: {file: string, content: string}) => JSON.parse(file.content))
+            .then((file: FileInterface) => JSON.parse(file.content))
             ;
     }
 
@@ -86,7 +87,7 @@ class ArchiveService implements ArchiveServiceInterface {
         this.logger.debug(`Episode meta data file ${file}`);
 
         return this.filesystem.readFile(file)
-            .then((file: { content: string, name: string }) => {
+            .then((file: FileInterface) => {
                 if (!file.content) {
                     throw new Error(`Episode file ${file.name} was empty`);
                 }
@@ -101,7 +102,7 @@ class ArchiveService implements ArchiveServiceInterface {
                 this.logger.debug(`Iframe file ${iframeFileSource}`);
 
                 return this.filesystem.readFile(`${seriesPath}/iframes/${episodeFileName}`)
-                    .then((iframeFile: { content: string, name: string }) => {
+                    .then((iframeFile: FileInterface) => {
                         meta.mp4 = this.extractor.episodeMp4Urls(iframeFile.content);
 
                         if (!meta.mp4.length) {//possibly other format

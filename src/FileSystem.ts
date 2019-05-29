@@ -3,6 +3,7 @@ import "reflect-metadata";
 import FileSystemInterface from "./FileSystemInterface";
 import CONSTANTS from "./app/config/constants";
 import LoggerInterface from "./LoggerInterface";
+import FileInterface from "./FileInterface";
 
 @injectable()
 class FileSystem implements FileSystemInterface {
@@ -13,16 +14,20 @@ class FileSystem implements FileSystemInterface {
     ) {
     }
 
-    readFile(filename: string): Promise<{content: string, name: string}> {
-        if (!this.fs.existsSync(filename)) {
-            throw new Error(`File ${filename} does not exist`);
+    readFile(fullPath: string): Promise<FileInterface> {
+        if (!this.fs.existsSync(fullPath)) {
+            throw new Error(`File ${fullPath} does not exist`);
         }
 
-        const buffer = this.fs.readFileSync(filename, "utf8");
-        return new Promise((resolve) => resolve({content: buffer, name: filename}));
+        const buffer = this.fs.readFileSync(fullPath, "utf8");
+
+        const bits = fullPath.split('/');
+        const filename = String(bits.pop());
+
+        return new Promise((resolve) => resolve({content: buffer, name: filename, fullPath: fullPath}));
     }
 
-    writeFile(dir: string, filename: string, content: string): Promise<{ content: string, file: string }> {
+    writeFile(dir: string, filename: string, content: string): Promise<FileInterface> {
         if (!this.fs.existsSync(dir)) {
             this.fs.mkdirSync(dir, {recursive: true});
         }
@@ -32,7 +37,7 @@ class FileSystem implements FileSystemInterface {
 
         return new Promise((resolve) => {
             this.logger.debug(`File saved at ${cacheFile}`);
-            resolve({ content: content, file: cacheFile });
+            resolve({ content: content, name: filename, fullPath: cacheFile });
         });
     }
 

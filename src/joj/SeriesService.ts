@@ -8,6 +8,7 @@ import FileSystemInterface from "../FileSystemInterface";
 import LoggerInterface from "../LoggerInterface";
 import ClientInterface from "../ClientInterface";
 import Slug from "./Slug";
+import FileInterface from "../FileInterface";
 
 @injectable()
 class SeriesService implements SeriesServiceInterface {
@@ -39,7 +40,7 @@ class SeriesService implements SeriesServiceInterface {
         return this.client.fetch(url)
             .then((r: any) => r.text())
             .then((body: string) => this.filesystem.writeFile(programDir, 'index.html', body))
-            .then((r: { content: string, file: string }) => {
+            .then((r: FileInterface) => {
                 let seriesArchiveUrl = this.dom.seriesArchiveUrl(r.content);
                 if (!seriesArchiveUrl) {
                     seriesArchiveUrl = url;
@@ -80,7 +81,7 @@ class SeriesService implements SeriesServiceInterface {
                     .then((r: any) => r.text())
                     .then((content: string) => this.loadMoreEpisodes(series.seriesUrl, content))
                     .then((content: string) => this.filesystem.writeFile(`${programDir}/series`, `${series.title.replace('/', '-')}.html`, content))
-                    .then((r: any) => this.episodeService.cacheSeriesEpisodes([r.file]))
+                    .then((r: FileInterface) => this.episodeService.cacheSeriesEpisodes([r.fullPath]))
             ));
     }
 

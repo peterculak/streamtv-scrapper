@@ -24,6 +24,7 @@ let filesystem: FileSystemInterface;
 import * as fs from "fs";
 jest.mock('fs');
 import * as glob from "glob";
+import FileInterface from "../src/FileInterface";
 jest.mock('glob');
 
 describe('Filesystem', () => {
@@ -43,9 +44,10 @@ describe('Filesystem', () => {
         const mock2 = jest.spyOn(fs, 'existsSync');
         mock2.mockImplementation(() => true);
 
-        filesystem.readFile('/foo.txt').then((r: { content: string, name: string }) => {
+        filesystem.readFile('/foo.txt').then((r: FileInterface) => {
             expect(r.content).toEqual('file content');
-            expect(r.name).toEqual('/foo.txt');
+            expect(r.fullPath).toEqual('/foo.txt');
+            expect(r.name).toEqual('foo.txt');
             done();
         });
     });
@@ -55,9 +57,10 @@ describe('Filesystem', () => {
         mock.mockImplementation(() => true);
 
         filesystem.writeFile('/tmp', 'foo.txt', 'content')
-            .then((r: { content: string, file: string }) => {
+            .then((r: FileInterface) => {
                 expect(r.content).toEqual('content');
-                expect(r.file).toEqual('/tmp/foo.txt');
+                expect(r.name).toEqual('foo.txt');
+                expect(r.fullPath).toEqual('/tmp/foo.txt');
                 done();
             });
     });
@@ -67,9 +70,10 @@ describe('Filesystem', () => {
         mock.mockImplementation(() => false);
 
         filesystem.writeFile('/tmp/foo', 'bar.txt', 'content')
-            .then((r: { content: string, file: string }) => {
+            .then((r: FileInterface) => {
                 expect(r.content).toEqual('content');
-                expect(r.file).toEqual('/tmp/foo/bar.txt');
+                expect(r.name).toEqual('bar.txt');
+                expect(r.fullPath).toEqual('/tmp/foo/bar.txt');
                 done();
             });
         expect(fs.mkdirSync).toHaveBeenCalledWith('/tmp/foo', {recursive: true});

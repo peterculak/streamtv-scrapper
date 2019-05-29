@@ -1,6 +1,8 @@
+import FileInterface from "./FileInterface";
+
 interface FileSystemInterface {
-    readFile(fileName: string): Promise<{content: string, name: string}>
-    writeFile(dir: string, fileName: string, content: string): Promise<{ content: string, file: string }>
+    readFile(fileName: string): Promise<FileInterface>
+    writeFile(dir: string, fileName: string, content: string): Promise<FileInterface>
 
     /**
      * Perform a synchronous glob search.

@@ -6,6 +6,7 @@ import CONSTANTS from "../app/config/constants";
 import FileSystemInterface from "../FileSystemInterface";
 import LoggerInterface from "../LoggerInterface";
 import ClientInterface from "../ClientInterface";
+import FileInterface from "../FileInterface";
 const Bluebird = require("bluebird");
 
 @injectable()
@@ -22,15 +23,15 @@ class EpisodesService implements EpisodesServiceInterface {
     }
 
     cacheSeriesEpisodes(files: Array<string>): Promise<any> {
-        return Promise.all(files.map((file: string) => this.filesystem.readFile(file).then((file: {content: string, name: string}) => {
-            const season = file.name.split('/').pop();
+        return Promise.all(files.map((file: string) => this.filesystem.readFile(file).then((file: FileInterface) => {
+            const season = file.fullPath.split('/').pop();
             if (!season) {
                 throw new Error('Can not determine season from filename');
             }
             season.replace('.html', '');
             const episodes = this.extractor.episodesList(file.content);
             const seasonSubDir = season.replace('.html', '');
-            const dir = `${file.name.replace(season, '')}${seasonSubDir}`;
+            const dir = `${file.fullPath.replace(season, '')}${seasonSubDir}`;
 
             return this.cacheEpisodePages(dir, episodes);
         })));
