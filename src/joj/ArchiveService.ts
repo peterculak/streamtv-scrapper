@@ -12,15 +12,17 @@ import Slug from "./Slug";
 import {ArchiveIndexInterface} from "./ArchiveIndexInterface";
 import EpisodeInterface from "./EpisodeInterface";
 import FileInterface from "../FileInterface";
+import EpisodeFactoryInterface from "./EpisodeFactoryInterface";
 
 @injectable()
 class ArchiveService implements ArchiveServiceInterface {
-    private readonly channelUrl: string = 'https://www.joj.sk';
+    private readonly channelUrl: string = 'https://www.joj.sk';//todo possibly inject
     private readonly archiveUrl: string = `${this.channelUrl}/archiv`;
     private readonly cacheDir: string = './var/cache/joj.sk';
 
     constructor(
         @inject(CONSTANTS.JOJ_EXTRACTOR) private extractor: ExtractorServiceInterface,
+        @inject(CONSTANTS.JOJ_EPISODE_FACTORY) private episodeFactory: EpisodeFactoryInterface,
         @inject(CONSTANTS.LOGGER) private logger: LoggerInterface,
         @inject(CONSTANTS.FILESYSTEM) private filesystem: FileSystemInterface,
         @inject(CONSTANTS.CLIENT) private client: ClientInterface,
@@ -29,7 +31,7 @@ class ArchiveService implements ArchiveServiceInterface {
 
     cacheArchiveList(): Promise<ArchiveIndexInterface> {
         return this.client.fetch(this.archiveUrl)
-            .then((r: any) => r.text())
+            .then((r: Response) => r.text())
             .then((body: string) => this.filesystem.writeFile(this.cacheDir, 'archiv.html', body))
             .then((file: FileInterface) => this.extractor.extractArchive(file.content))
             .then((archive: ArchiveIndexInterface) => this.filesystem.writeFile(this.cacheDir, 'archive.json', JSON.stringify(archive)))
@@ -37,7 +39,7 @@ class ArchiveService implements ArchiveServiceInterface {
             ;
     }
 
-    compileArchiveForProgram(url: string): Promise<Array<any>> {
+    compileArchiveForProgram(url: string): Promise<EpisodeInterface[]> {
         this.logger.info(`Compiling json for ${url}`);
         const slug = Slug.fromProgramUrl(url);
         if (!slug) {
@@ -64,57 +66,35 @@ class ArchiveService implements ArchiveServiceInterface {
         }, Promise.resolve([]));
     }
 
-    private compileArchiveForSlug(slug: string): Promise<any> {
+    private compileArchiveForSlug(slug: string): Promise<EpisodeInterface[]> {
         const seriesDir = `${this.cacheDir}/${slug}/series`;
         const jsonDir = `${this.cacheDir}/${slug}`;
         this.logger.info(`Series dir ${seriesDir}`);
         const files = this.filesystem.sync("**(!iframes)/*.html", {cwd: seriesDir});
 
         return Promise.all(files.map((file: string) => this.episodeMetaData(`${seriesDir}/${file}`)))
-            .then((archive: Array<any>) => archive.filter((item: any) => item !== undefined))
-            .then((filteredArchive: Array<any>) =>
+            .then((archive: Array<EpisodeInterface>) => archive.filter((item: EpisodeInterface) => item !== undefined))
+            .then((filteredArchive: Array<EpisodeInterface>) => {
                 this.filesystem.writeFile(
                     jsonDir,
                     `${slug}.json`,
                     JSON.stringify(this.groupEpisodesBySeason(filteredArchive))
-                )
-            )
-            .catch((error: Error) => this.logger.error(error.message))
-            ;
+                );
+
+                return filteredArchive;
+            })
+            .catch((error: Error) => {
+                this.logger.error(error.message);
+                throw(error);
+            });
     }
 
     private episodeMetaData(file: string): Promise<EpisodeInterface> {
         this.logger.debug(`Episode meta data file ${file}`);
-
-        return this.filesystem.readFile(file)
-            .then((file: FileInterface) => {
-                if (!file.content) {
-                    throw new Error(`Episode file ${file.name} was empty`);
-                }
-                return this.extractor.episodeSchemaOrgMeta(file.content);
-            })
-            .then((meta: EpisodeInterface) => {
-                const seriesPath = file.substr(0, file.lastIndexOf('/'));
-                const bits = file.split('/');
-                const episodeFileName = bits[bits.length - 1];
-                const iframeFileSource = `${seriesPath}/iframes/${episodeFileName}`;
-
-                this.logger.debug(`Iframe file ${iframeFileSource}`);
-
-                return this.filesystem.readFile(`${seriesPath}/iframes/${episodeFileName}`)
-                    .then((iframeFile: FileInterface) => {
-                        meta.mp4 = this.extractor.episodeMp4Urls(iframeFile.content);
-
-                        if (!meta.mp4.length) {//possibly other format
-                            throw new Error(`Mp4 urls not found in ${iframeFileSource}`);
-                        }
-                        return meta;
-                    });
-            })
-            ;
+        return this.episodeFactory.fromCache(file);
     }
 
-    private groupEpisodesBySeason(archive: Array<any>): Array<any> {
+    private groupEpisodesBySeason(archive: Array<EpisodeInterface>): Array<any> {
         return this._.toArray(
             this._.groupBy(archive, (item: { partOfSeason: { seasonNumber: number } }) => item.partOfSeason.seasonNumber)
         );

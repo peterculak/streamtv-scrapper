@@ -20,6 +20,8 @@ import LoggerInterface from "../../LoggerInterface";
 import Logger from "../../Logger";
 import ClientInterface from "../../ClientInterface";
 import Client from "../../Client";
+import EpisodeFactoryInterface from "../../joj/EpisodeFactoryInterface";
+import EpisodeFactory from "../../joj/EpisodeFactory";
 const pino = require('pino')();
 const cheerio = require('cheerio');
 const _ = require('underscore');
@@ -36,6 +38,7 @@ container.bind<CheerioAPI>(CONSTANTS.CHEERIO).toConstantValue(cheerio);
 container.bind<Underscore.UnderscoreStatic>(CONSTANTS.UNDERSCORE).toConstantValue(_);
 container.bind<LoggerInterface>(CONSTANTS.LOGGER).to(Logger);
 container.bind<ClientInterface>(CONSTANTS.CLIENT).to(Client);
+container.bind<EpisodeFactoryInterface>(CONSTANTS.JOJ_EPISODE_FACTORY).to(EpisodeFactory);
 
 const filesystem = new FileSystem(fs, glob, container.get<LoggerInterface>(CONSTANTS.LOGGER));
 container.bind<FileSystemInterface>(CONSTANTS.FILESYSTEM).toConstantValue(filesystem);

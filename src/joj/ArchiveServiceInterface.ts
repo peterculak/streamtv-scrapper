@@ -1,6 +1,8 @@
+import EpisodeInterface from "./EpisodeInterface";
+
 interface ArchiveServiceInterface {
     cacheArchiveList(): Promise<any>;
-    compileArchiveForProgram(url?: string): Promise<Array<any>>;
+    compileArchiveForProgram(url?: string): Promise<EpisodeInterface[]>;
     compileArchive(): Promise<any>;
 }
 

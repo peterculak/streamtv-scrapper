@@ -1,5 +1,6 @@
 interface EpisodeInterface {
-    mp4: Array<string>;
+    partOfSeason: { seasonNumber: number },
+    mp4: Array<string>,
 }
 
 export default EpisodeInterface;
