@@ -37,7 +37,7 @@ class EpisodeFactory implements EpisodeFactoryInterface {
                         meta.mp4 = this.extractor.episodeMp4Urls(iframeFile.content);
 
                         if (!meta.mp4.length) {//possibly other format
-                            this.logger.warn(`Mp4 urls not found in ${iframeFileSource}`);
+                            throw new Error(`Mp4 urls not found in ${iframeFileSource}`);
                         }
                         return meta;
                     });

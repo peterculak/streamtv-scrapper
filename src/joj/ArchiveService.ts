@@ -101,7 +101,15 @@ class ArchiveService implements ArchiveServiceInterface {
 
     private episodeMetaData(file: string): Promise<EpisodeInterface> {
         this.logger.debug(`Episode meta data file ${file}`);
-        return this.episodeFactory.fromCache(file);
+
+        return this.episodeFactory.fromCache(file).catch((e: Error) => {
+            this.logger.warn(e.toString());
+
+            return {
+                partOfSeason: { seasonNumber: 0 },
+                mp4:[],
+            };
+        });
     }
 
     private groupEpisodesBySeason(archive: Array<EpisodeInterface>): Array<EpisodeInterface> {
