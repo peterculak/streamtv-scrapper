@@ -50,9 +50,9 @@ describe('JOJ DOM Extractor', () => {
             {id: '577', title: '1. séria'}]);
     });
 
-    test('can extract episode list from html', () => {
+    test('can extract episode pages list from html', () => {
         const html = readFixtureFile(__dirname + '/../fixtures/15-min-kuchar/series/3. seria.html');
-        expect(extractor.episodesList(html)).toEqual([
+        expect(extractor.episodePagesList(html)).toEqual([
             {
                 title: '15 MINÚT. KUCHÁR',
                 url:

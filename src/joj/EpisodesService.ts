@@ -29,7 +29,7 @@ class EpisodesService implements EpisodesServiceInterface {
                 throw new Error('Can not determine season from filename');
             }
             season.replace('.html', '');
-            const episodes = this.extractor.episodesList(file.content);
+            const episodes = this.extractor.episodePagesList(file.content);
             const seasonSubDir = season.replace('.html', '');
             const dir = `${file.fullPath.replace(season, '')}${seasonSubDir}`;
 

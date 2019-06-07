@@ -49,7 +49,7 @@ class Extractor implements ExtractorServiceInterface {
         return meta;
     }
 
-    public episodesList(content: string): Array<{title: string, url: string, img: string, date: string, episode: number}> {
+    public episodePagesList(content: string): Array<{title: string, url: string, img: string, date: string, episode: number}> {
         const $ = this.dom.load(content);
         const episodes: Array<{title: string, url: string, img: string, date: string, episode: number}> = [];
         $('.e-mobile-article-p article').each((i: number, elem: any) => {

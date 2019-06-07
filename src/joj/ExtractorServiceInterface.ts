@@ -3,7 +3,7 @@ import EpisodeInterface from "./EpisodeInterface";
 
 interface ExtractorServiceInterface {
     extractArchive(content: string): ArchiveIndexInterface;
-    episodesList(content: string): Array<{title: string, url: string, img: string, date: string, episode: number}>;
+    episodePagesList(content: string): Array<{title: string, url: string, img: string, date: string, episode: number}>;
     episodeIframeUrl(content: string): string;
     seriesArchiveUrl(content: string): string;
     seriesPagesMetaData(content: string): Array<{ id: string, title: string }>;
