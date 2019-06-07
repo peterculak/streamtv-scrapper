@@ -45,11 +45,13 @@ if (program.concurrency) {
 
 if (!program.programUrl) {
     if (program.fetch && program.compile) {
-        fetchSeries().then(() => archiveCompiler.compileArchive());//should probably respect -x
+        fetchSeries().then(() =>
+            program.pattern ? archiveCompiler.compileArchiveForProgramRegex(program.pattern) : archiveCompiler.compileArchive()
+        );
     } else if (program.fetch) {//only fetch !compile
         fetchSeries();
     } else if (program.compile) {//only compile !fetch
-        archiveCompiler.compileArchive();//should probably respect -x
+        program.pattern ? archiveCompiler.compileArchiveForProgramRegex(program.pattern) : archiveCompiler.compileArchive();
     }
 } else {
     if (program.fetch && program.compile) {

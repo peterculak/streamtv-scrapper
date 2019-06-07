@@ -12,7 +12,8 @@ import LoggerInterface from "../../src/LoggerInterface";
 import EpisodeFactoryInterface from "../../src/joj/EpisodeFactoryInterface";
 import EpisodeInterface from "../../src/joj/EpisodeInterface";
 
-const mockLogger = () => {};
+const mockLogger = () => {
+};
 mockLogger.fatal = jest.fn();
 mockLogger.error = jest.fn();
 mockLogger.warn = jest.fn();
@@ -90,7 +91,6 @@ describe('Archive Service', () => {
         });
         service.cacheArchiveList().then((actualArchive: ArchiveIndexInterface) => {
             done();
-            expect(true).toBe(true);
             expect(mockFilesystem.writeFile).toHaveBeenCalledWith(expect.any(String), expect.any(String), responseContent);
             expect(mockExtractor.extractArchive).toHaveBeenCalledWith(responseContent);
             expect(mockFilesystem.writeFile).toHaveBeenCalledWith(
@@ -104,24 +104,101 @@ describe('Archive Service', () => {
         });
     });
 
-    describe('compiles archive json file from cache for program url', () => {
+    describe('compiles archive json file from cache for given program url', () => {
         it('throws error when can not determine slug from url', () => {
             expect(() => service.compileArchiveForProgram('')).toThrow();
         });
 
-        it('stores program archive json file', () => {
+        it('creates and stores program archive json file', (done) => {
             mockFilesystem.sync.mockImplementation(() => ['1. seria/1.html']);
 
             mockEpisodeFactory.fromCache.mockImplementation(() => {
                 const episode: EpisodeInterface = {
-                    mp4: [],
+                    mp4: ['http://foo.bar/video.mp4'],
                     partOfSeason: {seasonNumber: 1}
                 };
                 return new Promise((resolve => resolve(episode)));
             });
-            service.compileArchiveForProgram('http://joj.sk/profesionali');
-            expect(mockFilesystem.sync).toHaveBeenCalledWith("**(!iframes)/*.html", {cwd: './var/cache/joj.sk/profesionali/series'});
-            expect(mockEpisodeFactory.fromCache).toHaveBeenCalledWith('./var/cache/joj.sk/profesionali/series/1. seria/1.html');
+            const expectedArchive = JSON.stringify([[{mp4: ['http://foo.bar/video.mp4'], partOfSeason: {seasonNumber: 1}}]]);
+            service.compileArchiveForProgram('http://joj.sk/profesionali').then((r: EpisodeInterface[]) => {
+                expect(mockFilesystem.sync).toHaveBeenCalledWith("**(!iframes)/*.html", {cwd: './var/cache/joj.sk/profesionali/series'});
+                expect(mockEpisodeFactory.fromCache).toHaveBeenCalledWith('./var/cache/joj.sk/profesionali/series/1. seria/1.html');
+                expect(mockFilesystem.writeFile).toHaveBeenCalledWith('./var/cache/joj.sk/profesionali', 'profesionali.json', expectedArchive);
+                done();
+            }).catch((e: any) => {
+                done.fail(e);
+            });
+        });
+    });
+
+    describe('compiles archive json file from cache for all programmes', () => {
+        it('creates and stores archive json file', (done) => {
+            const directories = [
+                './var/cache/joj.sk/profesionali/',
+            ];
+            const files = ['1. seria/1.html'];
+            mockFilesystem.sync
+                .mockImplementationOnce(() => directories)
+                .mockImplementationOnce(() => files)
+            ;
+
+            mockEpisodeFactory.fromCache.mockImplementation(() => {
+                const episode: EpisodeInterface = {
+                    mp4: ['http://foo.bar/video.mp4'],
+                    partOfSeason: {seasonNumber: 1}
+                };
+                return new Promise((resolve => resolve(episode)));
+            });
+
+            const expectedArchive = JSON.stringify([[{mp4: ['http://foo.bar/video.mp4'], partOfSeason: {seasonNumber: 1}}]]);
+            service.compileArchive().then((r: Array<EpisodeInterface[]>) => {
+                expect(mockFilesystem.writeFile.mock.calls.length).toBe(1);
+                expect(mockFilesystem.sync.mock.calls[0][0]).toBe('./var/cache/joj.sk/*/');
+                expect(mockFilesystem.sync.mock.calls[1][0]).toBe('**(!iframes)/*.html');
+                expect(mockFilesystem.sync.mock.calls[1][1]).toEqual({cwd: './var/cache/joj.sk/profesionali/series'});
+                expect(mockEpisodeFactory.fromCache).toHaveBeenCalledWith('./var/cache/joj.sk/profesionali/series/1. seria/1.html');
+                expect(mockFilesystem.writeFile).toHaveBeenCalledWith('./var/cache/joj.sk/profesionali', 'profesionali.json', expectedArchive);
+                done();
+            }).catch((e: any) => {
+                done.fail(e);
+            });
+        });
+    });
+
+    describe('compiles archive for given regex', () => {
+        it('creates and stores archive json file', (done) => {
+            const regex = '^p.*';
+            const directories = [
+                './var/cache/joj.sk/15-min-kuchar/',
+                './var/cache/joj.sk/profesionali/',
+            ];
+            const files = ['1. seria/1.html'];
+            mockFilesystem.sync
+                .mockImplementationOnce(() => directories)
+                .mockImplementation(() => files)
+            ;
+
+            mockEpisodeFactory.fromCache.mockImplementation(() => {
+                const episode: EpisodeInterface = {
+                    mp4: ['http://foo.bar/video.mp4'],
+                    partOfSeason: {seasonNumber: 1}
+                };
+                return new Promise((resolve => resolve(episode)));
+            });
+
+            const expectedArchive = JSON.stringify([[{mp4: ['http://foo.bar/video.mp4'], partOfSeason: {seasonNumber: 1}}]]);
+            service.compileArchiveForProgramRegex(regex).then((r: Array<EpisodeInterface[]>) => {
+                expect(mockFilesystem.writeFile.mock.calls.length).toBe(1);
+                expect(mockFilesystem.sync.mock.calls[0][0]).toBe('./var/cache/joj.sk/*/');
+                expect(mockFilesystem.sync.mock.calls[1][0]).toBe('**(!iframes)/*.html');
+                expect(mockFilesystem.sync.mock.calls[1][1]).toEqual({cwd: './var/cache/joj.sk/profesionali/series'});
+                expect(mockEpisodeFactory.fromCache).toHaveBeenCalledWith('./var/cache/joj.sk/profesionali/series/1. seria/1.html');
+                expect(mockFilesystem.writeFile).toHaveBeenCalledWith('./var/cache/joj.sk/profesionali', 'profesionali.json', expectedArchive);
+
+                done();
+            }).catch((e: any) => {
+                done.fail(e);
+            });
         });
     });
 });

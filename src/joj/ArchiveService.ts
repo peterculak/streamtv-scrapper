@@ -27,7 +27,8 @@ class ArchiveService implements ArchiveServiceInterface {
         @inject(CONSTANTS.FILESYSTEM) private filesystem: FileSystemInterface,
         @inject(CONSTANTS.CLIENT) private client: ClientInterface,
         @inject(CONSTANTS.UNDERSCORE) private _: Underscore.UnderscoreStatic,
-    ) {}
+    ) {
+    }
 
     cacheArchiveList(): Promise<ArchiveIndexInterface> {
         return this.client.fetch(this.archiveUrl)
@@ -37,6 +38,22 @@ class ArchiveService implements ArchiveServiceInterface {
             .then((archive: ArchiveIndexInterface) => this.filesystem.writeFile(this.cacheDir, 'archive.json', JSON.stringify(archive)))
             .then((file: FileInterface) => JSON.parse(file.content))
             ;
+    }
+
+    compileArchive(): Promise<Array<EpisodeInterface[]>> {
+        const directories = this.filesystem.sync(`${this.cacheDir}/*/`);
+        this.logger.info(`Found ${directories.length} cached program folders`);
+
+        return this.compileArchiveForDirectories(directories);
+    }
+
+    compileArchiveForProgramRegex(pattern: string): Promise<Array<EpisodeInterface[]>> {
+        const directories = this.filesystem.sync(`${this.cacheDir}/*/`)
+            .filter((element: any) => Slug.fromPath(element).match(new RegExp(pattern, 'i')) !== null);
+
+        this.logger.info(`Matching ${directories.length} folder(s) for regex ${pattern}`);
+
+        return this.compileArchiveForDirectories(directories);
     }
 
     compileArchiveForProgram(url: string): Promise<EpisodeInterface[]> {
@@ -49,10 +66,7 @@ class ArchiveService implements ArchiveServiceInterface {
         return this.compileArchiveForSlug(slug);
     }
 
-    compileArchive(): Promise<any> {
-        const directories = this.filesystem.sync(`${this.cacheDir}/*/`);
-        this.logger.info(`Found ${directories.length} cached program folders`);
-
+    private compileArchiveForDirectories(directories: Array<string>) {
         return directories.map((directory: string) => {
             const slug = Slug.fromPath(directory);
             if (!slug) {
@@ -73,7 +87,7 @@ class ArchiveService implements ArchiveServiceInterface {
         const files = this.filesystem.sync("**(!iframes)/*.html", {cwd: seriesDir});
 
         return Promise.all(files.map((file: string) => this.episodeMetaData(`${seriesDir}/${file}`)))
-            .then((archive: Array<EpisodeInterface>) => archive.filter((item: EpisodeInterface) => item !== undefined))
+            .then((archive: Array<EpisodeInterface>) => archive.filter((item: EpisodeInterface) => item.mp4.length >0))
             .then((filteredArchive: Array<EpisodeInterface>) => {
                 this.filesystem.writeFile(
                     jsonDir,
@@ -82,10 +96,6 @@ class ArchiveService implements ArchiveServiceInterface {
                 );
 
                 return filteredArchive;
-            })
-            .catch((error: Error) => {
-                this.logger.error(error.message);
-                throw(error);
             });
     }
 
@@ -94,7 +104,7 @@ class ArchiveService implements ArchiveServiceInterface {
         return this.episodeFactory.fromCache(file);
     }
 
-    private groupEpisodesBySeason(archive: Array<EpisodeInterface>): Array<any> {
+    private groupEpisodesBySeason(archive: Array<EpisodeInterface>): Array<EpisodeInterface> {
         return this._.toArray(
             this._.groupBy(archive, (item: { partOfSeason: { seasonNumber: number } }) => item.partOfSeason.seasonNumber)
         );
