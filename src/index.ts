@@ -51,16 +51,17 @@ if (!program.programUrl) {
     } else if (program.fetch) {//only fetch !compile
         fetchSeries();
     } else if (program.compile) {//only compile !fetch
-        program.pattern ? archiveCompiler.compileArchiveForProgramRegex(program.pattern) : archiveCompiler.compileArchive();
+        program.pattern ? archiveCompiler.compileArchiveForProgramRegex(program.pattern).catch((e: Error) => console.log(e))
+            : archiveCompiler.compileArchive().catch((e: Error) => console.log(e));
     }
 } else {
     if (program.fetch && program.compile) {
         series.cacheProgramSeriesIndexPagesForProgram(program.programUrl)
-            .then(() => archiveCompiler.compileArchiveForProgram(program.programUrl));
+            .then(() => archiveCompiler.compileArchiveForProgram(program.programUrl)).catch((e: Error) => console.log(e));
     } else if (program.fetch) {//only fetch 1 program and not compile
-        series.cacheProgramSeriesIndexPagesForProgram(program.programUrl);
+        series.cacheProgramSeriesIndexPagesForProgram(program.programUrl).catch((e: Error) => console.log(e));
     } else if (program.compile) {//only compile 1 program and no fetch
-        archiveCompiler.compileArchiveForProgram(program.programUrl)
+        archiveCompiler.compileArchiveForProgram(program.programUrl).catch((e: Error) => console.log(e))
     }
 }
 

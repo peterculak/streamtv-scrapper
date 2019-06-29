@@ -114,12 +114,14 @@ describe('Archive Service', () => {
 
             mockEpisodeFactory.fromCache.mockImplementation(() => {
                 const episode: EpisodeInterface = {
+                    episodeNumber: 1,
+                    partOfTVSeries: {},
                     mp4: ['http://foo.bar/video.mp4'],
                     partOfSeason: {seasonNumber: 1}
                 };
                 return new Promise((resolve => resolve(episode)));
             });
-            const expectedArchive = JSON.stringify([[{mp4: ['http://foo.bar/video.mp4'], partOfSeason: {seasonNumber: 1}}]]);
+            const expectedArchive = JSON.stringify([{1: {seasonNumber: 1, episodes: [{episodeNumber: 1, mp4: ['http://foo.bar/video.mp4']}]}}]);
             service.compileArchiveForProgram('http://joj.sk/profesionali').then((r: EpisodeInterface[]) => {
                 expect(mockFilesystem.sync).toHaveBeenCalledWith("**(!iframes)/*.html", {cwd: './var/cache/joj.sk/profesionali/series'});
                 expect(mockEpisodeFactory.fromCache).toHaveBeenCalledWith('./var/cache/joj.sk/profesionali/series/1. seria/1.html');
@@ -144,13 +146,15 @@ describe('Archive Service', () => {
 
             mockEpisodeFactory.fromCache.mockImplementation(() => {
                 const episode: EpisodeInterface = {
+                    episodeNumber: 1,
+                    partOfTVSeries: {},
                     mp4: ['http://foo.bar/video.mp4'],
                     partOfSeason: {seasonNumber: 1}
                 };
                 return new Promise((resolve => resolve(episode)));
             });
 
-            const expectedArchive = JSON.stringify([[{mp4: ['http://foo.bar/video.mp4'], partOfSeason: {seasonNumber: 1}}]]);
+            const expectedArchive = JSON.stringify([{1: {seasonNumber: 1, episodes: [{episodeNumber: 1, mp4: ['http://foo.bar/video.mp4']}]}}]);
             service.compileArchive().then((r: Array<EpisodeInterface[]>) => {
                 expect(mockFilesystem.writeFile.mock.calls.length).toBe(1);
                 expect(mockFilesystem.sync.mock.calls[0][0]).toBe('./var/cache/joj.sk/*/');
@@ -180,13 +184,15 @@ describe('Archive Service', () => {
 
             mockEpisodeFactory.fromCache.mockImplementation(() => {
                 const episode: EpisodeInterface = {
+                    episodeNumber: 1,
+                    partOfTVSeries: {},
                     mp4: ['http://foo.bar/video.mp4'],
-                    partOfSeason: {seasonNumber: 1}
+                    partOfSeason: {seasonNumber: 2}
                 };
                 return new Promise((resolve => resolve(episode)));
             });
 
-            const expectedArchive = JSON.stringify([[{mp4: ['http://foo.bar/video.mp4'], partOfSeason: {seasonNumber: 1}}]]);
+            const expectedArchive = JSON.stringify([{2: {seasonNumber: 2, episodes: [{episodeNumber: 1, mp4: ['http://foo.bar/video.mp4']}]}}]);
             service.compileArchiveForProgramRegex(regex).then((r: Array<EpisodeInterface[]>) => {
                 expect(mockFilesystem.writeFile.mock.calls.length).toBe(1);
                 expect(mockFilesystem.sync.mock.calls[0][0]).toBe('./var/cache/joj.sk/*/');

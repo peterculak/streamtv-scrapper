@@ -3,15 +3,12 @@ import {decorate, injectable} from "inversify";
 import {container} from "../../src/app/config/ioc_config";
 import ClientInterface from "../../src/ClientInterface";
 import CONSTANTS from "../../src/app/config/constants";
-import ArchiveServiceInterface from "../../src/joj/ArchiveServiceInterface";
 import FileSystemInterface from "../../src/FileSystemInterface";
-import FileInterface from "../../src/FileInterface";
 import ExtractorServiceInterface from "../../src/joj/ExtractorServiceInterface";
-import {ArchiveIndexInterface} from "../../src/joj/ArchiveIndexInterface";
 import LoggerInterface from "../../src/LoggerInterface";
 import EpisodeFactoryInterface from "../../src/joj/EpisodeFactoryInterface";
-import EpisodeInterface from "../../src/joj/EpisodeInterface";
 import EpisodesServiceInterface from "../../src/joj/EpisodesServiceInterface";
+import EpisodePageInterface from "../../src/joj/EpisodePageInterface";
 
 const mockLogger = () => {
 };
@@ -77,13 +74,13 @@ describe('Episodes Service', () => {
                 content: 'content'
             }));
         });
-        const episodePage = { title: 'WAU LETO S JOJ',
-            url:
-                'https://videoportal.joj.sk/wau-leto/epizoda/33389-wau-leto-s-joj',
-            img:
-                'https://img.joj.sk/r460x260n/0d0bacafcc7aaa38b575a6dcdde6b0c0',
+        const episodePage: EpisodePageInterface = {
+            title: 'WAU LETO S JOJ',
+            url: 'https://videoportal.joj.sk/wau-leto/epizoda/33389-wau-leto-s-joj',
+            img: 'https://img.joj.sk/r460x260n/0d0bacafcc7aaa38b575a6dcdde6b0c0',
             date: '30.7.2016',
-            episode: 1 };
+            episode: 1
+        };
 
         mockExtractor.episodePagesList.mockImplementationOnce(() => [ episodePage ]);
 

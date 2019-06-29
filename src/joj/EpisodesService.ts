@@ -7,6 +7,7 @@ import FileSystemInterface from "../FileSystemInterface";
 import LoggerInterface from "../LoggerInterface";
 import ClientInterface from "../ClientInterface";
 import FileInterface from "../FileInterface";
+import EpisodePageInterface from "./EpisodePageInterface";
 const Bluebird = require("bluebird");
 
 @injectable()
@@ -41,7 +42,7 @@ class EpisodesService implements EpisodesServiceInterface {
         this.concurrency = concurrency;
     }
 
-    private cacheEpisodePages(seriesDir: string, episodePages: Array<{ url: string, title: string, episode: number, date: string }>): Promise<any> {
+    private cacheEpisodePages(seriesDir: string, episodePages: Array<EpisodePageInterface>): Promise<FileInterface[]> {
         return Bluebird.map(
             episodePages,
             (episode: any) => this.cacheEpisodePage(seriesDir, episode),
@@ -49,7 +50,10 @@ class EpisodesService implements EpisodesServiceInterface {
         );
     }
 
-    private cacheEpisodePage(seriesDir: string, episode: any) {
+    private cacheEpisodePage(seriesDir: string, episode: EpisodePageInterface): Promise<FileInterface> {
+        if (episode.url === undefined) {
+            throw new Error('episode.url undefined');
+        }
         return this.client.fetch(episode.url)
             .then((r: Response) => r.text())
             .then((content: string) => {//this caches page which contains url to video iframe
@@ -67,7 +71,8 @@ class EpisodesService implements EpisodesServiceInterface {
                     .then((content: string) => this.filesystem.writeFile(`${seriesDir}/iframes`, `${episode.episode}.html`, content))
                     ;
             })
-            .catch((error: Error) => this.logger.error(error.toString()));
+            // .catch((error: Error) => this.logger.error(error.toString()))
+            ;
     }
 }
 

@@ -42,9 +42,12 @@ class SeriesService implements SeriesServiceInterface {
             .then((body: string) => this.filesystem.writeFile(programDir, 'index.html', body))
             .then((r: FileInterface) => {
                 let seriesArchiveUrl = this.dom.seriesArchiveUrl(r.content);
+                this.logger.info(`Series archiveUrl ${seriesArchiveUrl}`);
                 if (!seriesArchiveUrl) {
                     seriesArchiveUrl = url;
                 }
+                this.logger.info(`Series archiveUrl ${seriesArchiveUrl}`);
+                seriesArchiveUrl = seriesArchiveUrl.replace('archív', 'archiv');
                 return this.getSeriesPagesMeta(seriesArchiveUrl);
             })
             .then((seriesPagesMeta: Array<{ seriesUrl: string, url: string, title: string }>) => this.cacheSeriesPages(programDir, seriesPagesMeta))
@@ -87,6 +90,7 @@ class SeriesService implements SeriesServiceInterface {
 
     private loadMoreEpisodes(seriesUrl: string, content: string): Promise<string> {
         const loadMoreEpisodesUrl = this.loadMoreEpisodesUrl(seriesUrl, content);
+
         if (!loadMoreEpisodesUrl) {
             return new Promise((resolve) => resolve(content));
         }
@@ -111,6 +115,10 @@ class SeriesService implements SeriesServiceInterface {
 
         if (!loadMoreEpisodesLink) {
             return '';
+        }
+
+        if (seriesUrl.match(/^http[s]?:\/\/videoportal.joj.sk/)) {
+            return `https://videoportal.joj.sk${loadMoreEpisodesLink}`;
         }
 
         //this gets hostname

@@ -5,6 +5,7 @@ import CONSTANTS from "../app/config/constants";
 import {ArchiveIndexInterface} from "./ArchiveIndexInterface";
 import Slug from "./Slug";
 import EpisodeInterface from "./EpisodeInterface";
+import EpisodePageInterface from "./EpisodePageInterface";
 
 @injectable()
 class Extractor implements ExtractorServiceInterface {
@@ -31,7 +32,7 @@ class Extractor implements ExtractorServiceInterface {
 
     public seriesArchiveUrl(content: string): string {
         const $ = this.dom.load(content);
-        const a = $('.e-subnav-wrap a[title*="Arch"]');
+        const a = $('.e-subnav-wrap a[title*="Archív"]');
         return a.length ? a.attr('href'): '';
     }
 
@@ -49,10 +50,16 @@ class Extractor implements ExtractorServiceInterface {
         return meta;
     }
 
-    public episodePagesList(content: string): Array<{title: string, url: string, img: string, date: string, episode: number}> {
+    public episodePagesList(content: string): Array<EpisodePageInterface> {
         const $ = this.dom.load(content);
-        const episodes: Array<{title: string, url: string, img: string, date: string, episode: number}> = [];
-        $('.e-mobile-article-p article').each((i: number, elem: any) => {
+        const episodes: Array<EpisodePageInterface> = [];
+
+        let episodesSection = $('.e-mobile-article-p article');
+
+        if (!episodesSection.length) {
+            episodesSection = $('.b-articles-mobile-listing article');
+        }
+        episodesSection.each((i: number, elem: any) => {
             const a = $('a', elem);
             const subtitle = $('h4.subtitle', elem);
 
@@ -66,13 +73,33 @@ class Extractor implements ExtractorServiceInterface {
                 episode = parseInt(episodeString.split(':')[1]);
             }
 
-            episodes.push({
-                title: a.attr('title'),
-                url: a.attr('href'),
-                img: $('img', a).attr('data-original'),
-                date: date,
-                episode: episode,
-            });
+            if (!episode) {
+                episodeString = $('span', subtitle).first().html();
+                if (episodeString) {
+                    episode = parseInt(episodeString.split(':')[1]);
+                }
+            }
+
+            if (!episode) {
+                episodeString = $('span', subtitle).last().html();
+                if (episodeString) {
+                    episode = parseInt(episodeString.split(':')[1]);
+                }
+            }
+
+            // if (!episode) {
+            //     throw new Error('Can not determine episode number from episodeString ${episodeString}');
+            // }
+
+            if (episode) {
+                episodes.push({
+                    title: a.attr('title'),
+                    url: a.attr('href'),
+                    img: $('img', a).attr('data-original'),
+                    date: date,
+                    episode: episode,
+                });
+            }
         });
 
         return episodes;
@@ -80,8 +107,17 @@ class Extractor implements ExtractorServiceInterface {
 
     public loadMoreEpisodesLink(content: string): string {
         const $ = this.dom.load(content);
-        const a = $('a[title="Načítaj viac"]');
-        return a.length ? a.attr('href') : '';
+        const a = $('a[title="Načítaj viac"]').last();
+
+        if (a.length) {
+            if (a.attr('href') !== '#') {
+                return a.attr('href');
+            } else {
+                return a.attr('data-href');
+            }
+        }
+
+        return '';
     }
 
     public moreEpisodes(content: string): string {
@@ -96,7 +132,8 @@ class Extractor implements ExtractorServiceInterface {
 
     public appendEpisodes(content: string, moreContent: string): string {
         const $ = this.dom.load(content);
-        $('a[title="Načítaj viac"]').parent().replaceWith(moreContent);
+        //todo last is a hack to find correct Load More link
+        $('a[title="Načítaj viac"]').last().parent().replaceWith(moreContent);
 
         return $.html();
     }
