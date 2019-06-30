@@ -50,6 +50,18 @@ class SeriesService implements SeriesServiceInterface {
                 seriesArchiveUrl = seriesArchiveUrl.replace('archív', 'archiv');
                 return this.getSeriesPagesMeta(seriesArchiveUrl);
             })
+            .then((seriesPagesMeta: Array<{ seriesUrl: string, url: string, title: string }>) => {
+                //idea is to only fetch new series files and if there are no new then run last series
+                //todo will need fixing
+                const filtered = seriesPagesMeta.filter((item: any) => {
+                    const seriesCachedFile = `${programDir}/series/${item.title.replace('/', '-')}.html`;
+                    return !this.filesystem.existsSync(seriesCachedFile);
+                });
+                if (!filtered.length) {
+                    filtered.push(seriesPagesMeta[0]);
+                }
+                return filtered;
+            })
             .then((seriesPagesMeta: Array<{ seriesUrl: string, url: string, title: string }>) => this.cacheSeriesPages(programDir, seriesPagesMeta))
             ;
     }

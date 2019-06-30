@@ -36,6 +36,7 @@ class EpisodesService implements EpisodesServiceInterface {
                 const dir = `${file.fullPath.replace(season, '')}${seasonSubDir}`;
 
                 const notCached = episodes.filter((episode: any) => !this.filesystem.existsSync(`${dir}/${episode.episode}.html`) || !this.filesystem.existsSync(`${dir}/iframes/${episode.episode}.html`));
+                this.logger.info(`Fetching ${notCached.length} new episode(s)`);
                 return this.cacheEpisodePages(dir, notCached);
             }))
         );

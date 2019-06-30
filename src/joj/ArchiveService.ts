@@ -146,7 +146,8 @@ class ArchiveService implements ArchiveServiceInterface {
                 delete item.partOfSeason;
                 return item;
             });
-            seasonMeta[seasonNumber].episodes = this._.sortBy(episodesBySeason[seasonNumber], (episode: EpisodeInterface) => -episode.episodeNumber);
+            const unique = this._.uniq(episodesBySeason[seasonNumber], (episode: EpisodeInterface) => episode.episodeNumber);
+            seasonMeta[seasonNumber].episodes = this._.sortBy(unique, (episode: EpisodeInterface) => -episode.episodeNumber);
         });
 
         tvseriesMeta.seasons = this._.toArray(seasonMeta);
