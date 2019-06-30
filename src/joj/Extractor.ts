@@ -91,10 +91,16 @@ class Extractor implements ExtractorServiceInterface {
             //     throw new Error('Can not determine episode number from episodeString ${episodeString}');
             // }
 
-            if (episode) {
+            // if (!date) {
+            //     throw new Error('Can not determine date');
+            // }
+
+            const title = a.attr('title');
+            const url = a.attr('href');
+            if (episode && title && url) {
                 episodes.push({
-                    title: a.attr('title'),
-                    url: a.attr('href'),
+                    title: title,
+                    url: url,
                     img: $('img', a).attr('data-original'),
                     date: date,
                     episode: episode,
@@ -161,6 +167,14 @@ class Extractor implements ExtractorServiceInterface {
             string = '';
         }
         return JSON.parse(string);
+    }
+
+    public extractDateAdded(content: string): string {
+        const $ = this.dom.load(content);
+        const dirty = $('div.date').text() as string;
+
+        const clean = dirty.replace('Pridané:', '');
+        return clean.trim();
     }
 
     public episodeMp4Urls(content: string): Array<string> {

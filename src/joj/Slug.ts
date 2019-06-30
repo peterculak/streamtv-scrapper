@@ -12,7 +12,7 @@ class Slug {
 
         const bits = url.split('/');
         let slug = bits.pop();
-        if (slug === 'archiv' || slug === 'o-sutazi' || slug === 'o-relacii' || slug === 'o-seriali') {
+        if (slug === 'archiv' || slug === 'o-sutazi' || slug === 'o-relacii' || slug === 'o-seriali' || slug === 'uvod') {
             slug = bits.pop();
         }
 

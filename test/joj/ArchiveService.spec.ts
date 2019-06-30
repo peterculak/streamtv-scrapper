@@ -38,6 +38,7 @@ const mockFilesystem = () => {
 mockFilesystem.writeFile = jest.fn();
 mockFilesystem.readFile = jest.fn();
 mockFilesystem.sync = jest.fn();
+mockFilesystem.existsSync = jest.fn();
 decorate(injectable(), mockFilesystem);
 container
     .rebind<FileSystemInterface>(CONSTANTS.FILESYSTEM)

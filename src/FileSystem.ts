@@ -44,6 +44,10 @@ class FileSystem implements FileSystemInterface {
     sync(pattern: string, options?: {}): string[] {
         return this.glob.sync(pattern, options);
     }
+
+    existsSync(fullPath: string): boolean {
+        return this.fs.existsSync(fullPath);
+    }
 }
 
 export default FileSystem;

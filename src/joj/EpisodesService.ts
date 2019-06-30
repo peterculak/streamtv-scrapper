@@ -24,18 +24,21 @@ class EpisodesService implements EpisodesServiceInterface {
     }
 
     cacheSeriesEpisodes(files: Array<string>): Promise<any> {
-        return Promise.all(files.map((file: string) => this.filesystem.readFile(file).then((file: FileInterface) => {
-            const season = file.fullPath.split('/').pop();
-            if (!season) {
-                throw new Error('Can not determine season from filename');
-            }
-            season.replace('.html', '');
-            const episodes = this.extractor.episodePagesList(file.content);
-            const seasonSubDir = season.replace('.html', '');
-            const dir = `${file.fullPath.replace(season, '')}${seasonSubDir}`;
+        return Promise.all(
+            files.map((file: string) => this.filesystem.readFile(file).then((file: FileInterface) => {
+                const season = file.fullPath.split('/').pop();
+                if (!season) {
+                    throw new Error('Can not determine season from filename');
+                }
+                season.replace('.html', '');
+                const episodes = this.extractor.episodePagesList(file.content);
+                const seasonSubDir = season.replace('.html', '');
+                const dir = `${file.fullPath.replace(season, '')}${seasonSubDir}`;
 
-            return this.cacheEpisodePages(dir, episodes);
-        })));
+                const notCached = episodes.filter((episode: any) => !this.filesystem.existsSync(`${dir}/${episode.episode}.html`) || !this.filesystem.existsSync(`${dir}/iframes/${episode.episode}.html`));
+                return this.cacheEpisodePages(dir, notCached);
+            }))
+        );
     }
 
     setConcurrency(concurrency: number): void {

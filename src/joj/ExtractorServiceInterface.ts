@@ -11,6 +11,7 @@ interface ExtractorServiceInterface {
     moreEpisodes(content: string): string;
     loadMoreEpisodesLink(content: string): string;
     episodeSchemaOrgMeta(content: string): EpisodeInterface;
+    extractDateAdded(content: string): string;
     episodeMp4Urls(content: string): Array<string>;
 }
 

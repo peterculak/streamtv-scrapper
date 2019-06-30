@@ -22,9 +22,16 @@ class EpisodeFactory implements EpisodeFactoryInterface {
                 if (!file.content) {
                     throw new Error(`Episode file ${file.fullPath} was empty`);
                 }
-                return this.extractor.episodeSchemaOrgMeta(file.content);
+                const dateAdded = this.extractor.extractDateAdded(file.content);
+                if (!dateAdded) {
+                    this.logger.warn(`Date added not found in ${fullPath}`);
+                }
+                let meta = this.extractor.episodeSchemaOrgMeta(file.content);
+                meta.dateAdded = dateAdded;
+                return meta;
             })
             .then((meta: EpisodeInterface) => {
+                // console.log(meta);
                 const seriesPath = fullPath.substr(0, fullPath.lastIndexOf('/'));
                 const bits = fullPath.split('/');
                 const episodeFileName = bits[bits.length - 1];
