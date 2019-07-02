@@ -15,6 +15,8 @@ const archiveCompiler = container.get<ArchiveServiceInterface>(CONSTANTS.JOJ_ARC
 const series = container.get<SeriesServiceInterface>(CONSTANTS.JOJ_SERIES);
 const logger = container.get<Pino.Logger>(CONSTANTS.PINO_LOGGER);
 
+require('dotenv').config();
+
 console.log(
     chalk.red(
         figlet.textSync('STREAM-TV', {horizontalLayout: 'full'})
@@ -24,8 +26,10 @@ console.log(
 program
     .version('0.0.1')
     .description("CLI for scrapping TV channels")
+    .option('-h, --host [host]', 'Host to fetch data from')
     .option('-f, --fetch', 'When true it will fetch cache, when false it will compile json from cache')
     .option('-c, --compile', 'When true it will compile json from cache')
+    .option('-e, --encrypt', 'Encrypt final json files')
     .option('-r, --concurrency <number>', 'How many concurrent requests to send when fetching episode pages')
     .option('-x, --pattern [pattern]', 'Regexp pattern. Will fetch archives for all programmes with matching in title')
     .option('-p, --programUrl [program]', 'Fetch all episodes for program url')
@@ -37,31 +41,51 @@ if (!process.argv.slice(2).length) {
     process.exit();
 }
 
+const host = program.host.replace('www.', '');
+if (host !== 'joj.sk' && host !== 'plus.joj.sk' && host !== 'wau.joj.sk') {
+    program.outputHelp(() => 'Please provide host by passing -h option');
+    process.exit();
+}
+
 logger.level = verbosity(program.verbosity);
 
 if (program.concurrency) {
     container.get<EpisodesServiceInterface>(CONSTANTS.JOJ_EPISODES).setConcurrency(parseFloat(program.concurrency));
 }
 
-if (!program.programUrl) {
-    if (program.fetch && program.compile) {
-        fetchSeries().then(() =>
-            program.pattern ? archiveCompiler.compileArchiveForProgramRegex(program.pattern) : archiveCompiler.compileArchive()
-        );
-    } else if (program.fetch) {//only fetch !compile
-        fetchSeries();
-    } else if (program.compile) {//only compile !fetch
-        program.pattern ? archiveCompiler.compileArchiveForProgramRegex(program.pattern).catch((e: Error) => console.log(e))
-            : archiveCompiler.compileArchive().catch((e: Error) => console.log(e));
+if (program.encrypt) {
+    const password = process.env.STREAM_TV_APP_PASSWORD;
+    if (!password) {
+        program.outputHelp(() => 'Please set STREAM_TV_APP_PASSWORD env variable in ./env');
+        process.exit();
+    } else {
+        archiveCompiler.encryptArchive(host, password);
     }
 } else {
-    if (program.fetch && program.compile) {
-        series.cacheProgramSeriesIndexPagesForProgram(program.programUrl)
-            .then(() => archiveCompiler.compileArchiveForProgram(program.programUrl)).catch((e: Error) => console.log(e));
-    } else if (program.fetch) {//only fetch 1 program and not compile
-        series.cacheProgramSeriesIndexPagesForProgram(program.programUrl).catch((e: Error) => console.log(e));
-    } else if (program.compile) {//only compile 1 program and no fetch
-        archiveCompiler.compileArchiveForProgram(program.programUrl).catch((e: Error) => console.log(e))
+    if (!program.programUrl) {
+        if (program.fetch && program.compile) {
+            fetchSeries(host).then(() =>
+                program.pattern ? archiveCompiler.compileArchiveForProgramRegex(host, program.pattern) : archiveCompiler.compileArchive(host)
+            );
+        } else if (program.fetch) {//only fetch !compile
+            fetchSeries(host);
+        } else if (program.compile) {//only compile !fetch
+            program.pattern ? archiveCompiler.compileArchiveForProgramRegex(host, program.pattern).catch((e: Error) => console.log(e))
+                : archiveCompiler.compileArchive(host).catch((e: Error) => console.log(e));
+        } else if (program.encrypt) {
+
+        }
+    } else {
+        if (program.fetch && program.compile) {
+            series.cacheProgramSeriesIndexPagesForProgram(host, program.programUrl)
+                .then(() => archiveCompiler.compileArchiveForProgram(host, program.programUrl)).catch((e: Error) => console.log(e));
+        } else if (program.fetch) {//only fetch 1 program and not compile
+            series.cacheProgramSeriesIndexPagesForProgram(host, program.programUrl).catch((e: Error) => console.log(e));
+        } else if (program.compile) {//only compile 1 program and no fetch
+            archiveCompiler.compileArchiveForProgram(host, program.programUrl).catch((e: Error) => console.log(e))
+        } else if (program.encrypt) {
+
+        }
     }
 }
 
@@ -85,8 +109,8 @@ function verbosity(level: number) {
     return v;
 }
 
-function fetchSeries() {
-    return archiveService.cacheArchiveList()
+function fetchSeries(host: string) {
+    return archiveService.cacheArchiveList(host)
         .then((archive: Array<{}>) => {
             logger.info(`Archive contains ${archive.length} items`);
             if (program.pattern) {
@@ -98,6 +122,6 @@ function fetchSeries() {
             }
             return archive;
         })
-        .then((archive: Array<{}>) => series.cacheProgramSeriesIndexPages(archive))
+        .then((archive: Array<{}>) => series.cacheProgramSeriesIndexPages(host, archive))
         .catch((err: Error) => logger.error(err));
 }

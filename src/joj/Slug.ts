@@ -8,6 +8,10 @@ class Slug {
             return 'rozum-v-hrsti';
         } else if (url.indexOf('24000-gladiator') > -1) {
             return 'topfest';
+        } else if (url.indexOf('nevinni.joj.sk') > -1) {
+            return 'nevinni';
+        } else if (url.indexOf('velkonocnavyhra.joj.sk') > -1) {
+            return 'velkonocnavyhra';
         }
 
         const bits = url.split('/');

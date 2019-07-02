@@ -90,7 +90,7 @@ describe('Archive Service', () => {
         mockExtractor.extractArchive.mockImplementation(() => {
             return new Promise((resolve) => resolve(expectedArchive));
         });
-        service.cacheArchiveList().then((actualArchive: ArchiveIndexInterface) => {
+        service.cacheArchiveList('joj.sk').then((actualArchive: ArchiveIndexInterface) => {
             done();
             expect(mockFilesystem.writeFile).toHaveBeenCalledWith(expect.any(String), expect.any(String), responseContent);
             expect(mockExtractor.extractArchive).toHaveBeenCalledWith(responseContent);
@@ -156,7 +156,7 @@ describe('Archive Service', () => {
             });
 
             const expectedArchive = JSON.stringify([{1: {seasonNumber: 1, episodes: [{episodeNumber: 1, mp4: ['http://foo.bar/video.mp4']}]}}]);
-            service.compileArchive().then((r: Array<EpisodeInterface[]>) => {
+            service.compileArchive('joj.sk').then((r: Array<EpisodeInterface[]>) => {
                 expect(mockFilesystem.writeFile.mock.calls.length).toBe(1);
                 expect(mockFilesystem.sync.mock.calls[0][0]).toBe('./var/cache/joj.sk/*/');
                 expect(mockFilesystem.sync.mock.calls[1][0]).toBe('**(!iframes)/*.html');
@@ -194,7 +194,7 @@ describe('Archive Service', () => {
             });
 
             const expectedArchive = JSON.stringify([{2: {seasonNumber: 2, episodes: [{episodeNumber: 1, mp4: ['http://foo.bar/video.mp4']}]}}]);
-            service.compileArchiveForProgramRegex(regex).then((r: Array<EpisodeInterface[]>) => {
+            service.compileArchiveForProgramRegex('joj.sk', regex).then((r: Array<EpisodeInterface[]>) => {
                 expect(mockFilesystem.writeFile.mock.calls.length).toBe(1);
                 expect(mockFilesystem.sync.mock.calls[0][0]).toBe('./var/cache/joj.sk/*/');
                 expect(mockFilesystem.sync.mock.calls[1][0]).toBe('**(!iframes)/*.html');

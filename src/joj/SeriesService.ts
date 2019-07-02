@@ -21,21 +21,21 @@ class SeriesService implements SeriesServiceInterface {
     ) {
     }
 
-    cacheProgramSeriesIndexPages(archive: Array<{}>): Promise<any> {
+    cacheProgramSeriesIndexPages(host: string, archive: Array<{}>): Promise<any> {
         return archive.reduce((promiseChain: any, currentProgram: any) => {
             return promiseChain.then((chainResults: any) => {
-                return this.cacheProgramSeriesIndexPagesForProgram(currentProgram.url).then((currentResult: any) => [...chainResults, currentResult]);
+                return this.cacheProgramSeriesIndexPagesForProgram(host, currentProgram.url).then((currentResult: any) => [...chainResults, currentResult]);
             });
         }, Promise.resolve([]));
     }
 
-    cacheProgramSeriesIndexPagesForProgram(url: string): Promise<any> {
+    cacheProgramSeriesIndexPagesForProgram(host: string, url: string): Promise<any> {
         const slug = Slug.fromProgramUrl(url);
         if (!slug) {
             throw Error(`Can not determine slug from url ${url}`);
         }
 
-        const programDir = `./var/cache/joj.sk/${slug}`;
+        const programDir = `./var/cache/${host}/${slug}`;
 
         return this.client.fetch(url)
             .then((r: any) => r.text())
