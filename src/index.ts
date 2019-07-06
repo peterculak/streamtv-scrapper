@@ -29,6 +29,7 @@ program
     .option('-c, --compile', 'When true it will compile json from cache')
     .option('-e, --encrypt', 'Encrypt final json files')
     .option('-r, --concurrency <number>', 'How many concurrent requests to send when fetching episode pages')
+    .option('-m, --maxLoadMorePages <number>', 'How many max more pages should try to load when there is a load more link on page')
     .option('-x, --pattern [pattern]', 'Regexp pattern. Will fetch archives for all programmes with matching in title')
     .option('-p, --programUrl [program]', 'Fetch all episodes for program url')
     .option('-v, --verbosity', 'Verbosity level', increaseVerbosity, 0)
@@ -52,6 +53,10 @@ if (program.programUrl === 'https://www.joj.sk/najnovsie') {
     archiveService = container.get<ArchiveServiceInterface>(CONSTANTS.JOJ_NEWS_ARCHIVE);
     // console.log(archiveService);
     series = container.get<SeriesServiceInterface>(CONSTANTS.JOJ_NEWS_SERIES);
+}
+
+if (program.maxLoadMorePages) {
+    series.setMaxLoadMorePages(program.maxLoadMorePages);
 }
 
 logger.level = verbosity(program.verbosity);

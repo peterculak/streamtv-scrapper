@@ -61,9 +61,8 @@ class Extractor implements ExtractorServiceInterface {
         }
         if (!episodesSection.length) {
             episodesSection = $('article');
-            //todo this can only be running when fetching news not for tv series
+            //this can only be running when fetching news not for tv series
             episodesSection = episodesSection.filter((index: number, element: any) => {
-                // return true;
                 return $('.icons-play', element).length > 0;
             });
         }
@@ -116,8 +115,11 @@ class Extractor implements ExtractorServiceInterface {
 
     public loadMoreEpisodesLink(content: string): string {
         const $ = this.dom.load(content);
-        const a = $('a[title="Načítaj viac"]').last();
+        let a = $('a[title="Načítaj viac"]').last();
 
+        if (!a.length) {
+            a = $('.e-load-more a');
+        }
         if (a.length) {
             if (a.attr('href') !== '#') {
                 return a.attr('href');
@@ -131,7 +133,10 @@ class Extractor implements ExtractorServiceInterface {
 
     public moreEpisodes(content: string): string {
         const $ = this.dom.load(content);
-        const html = $('.row.scroll-item').html();
+        let html = $('.row.scroll-item').html();
+        if (!html) {
+            html = $('.row.js-load-item').html();
+        }
         if (html === null || html === undefined) {
             return '';
         }
@@ -142,7 +147,11 @@ class Extractor implements ExtractorServiceInterface {
     public appendEpisodes(content: string, moreContent: string): string {
         const $ = this.dom.load(content);
         //todo last is a hack to find correct Load More link
-        $('a[title="Načítaj viac"]').last().parent().replaceWith(moreContent);
+        let a = $('a[title="Načítaj viac"]').last();
+        if (!a.length) {
+            a = $('.e-load-more a');
+        }
+        a.parent().replaceWith(moreContent);
 
         return $.html();
     }

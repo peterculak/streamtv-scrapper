@@ -4,6 +4,9 @@ import JojSeriesService from "../SeriesService";
 
 @injectable()
 class SeriesService extends JojSeriesService {
+
+    protected maxLoadMorePages: number|null = 1;
+
     protected getSeriesPagesMeta(seriesArchiveUrl: string): Promise<Array<{ seriesUrl: string; url: string; title: string }>> {
 
         return new Promise((resolve) => resolve(

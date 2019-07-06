@@ -12,6 +12,9 @@ import FileInterface from "../FileInterface";
 
 @injectable()
 class SeriesService implements SeriesServiceInterface {
+
+    protected maxLoadMorePages: number|null = null;
+
     constructor(
         @inject(CONSTANTS.JOJ_EPISODES) private episodeService: EpisodesServiceInterface,
         @inject(CONSTANTS.JOJ_EXTRACTOR) private dom: ExtractorServiceInterface,
@@ -66,6 +69,10 @@ class SeriesService implements SeriesServiceInterface {
             ;
     }
 
+    setMaxLoadMorePages(n: number): void {
+        this.maxLoadMorePages = n;
+    }
+
     protected getSeriesPagesMeta(seriesArchiveUrl: string): Promise<Array<{ seriesUrl: string, url: string, title: string }>> {
         let seriesUrl: string;
         return this.client.fetch(seriesArchiveUrl)
@@ -100,8 +107,13 @@ class SeriesService implements SeriesServiceInterface {
             ));
     }
 
+    private loadedMorePages = 0;
     private loadMoreEpisodes(seriesUrl: string, content: string): Promise<string> {
         const loadMoreEpisodesUrl = this.loadMoreEpisodesUrl(seriesUrl, content);
+
+        this.logger.warn(`loadMoreEpisodesUrl ${loadMoreEpisodesUrl}`);
+        this.logger.warn(`max: ${this.maxLoadMorePages}`);
+        this.logger.warn(`loaded: ${this.loadedMorePages}`);
 
         if (!loadMoreEpisodesUrl) {
             return new Promise((resolve) => resolve(content));
@@ -110,7 +122,21 @@ class SeriesService implements SeriesServiceInterface {
         this.logger.debug(`Loading more from ${loadMoreEpisodesUrl}`);
         return this.client.fetch(loadMoreEpisodesUrl)
             .then((r: any) => r.text())
-            .then((nextContent: string) => this.loadMoreEpisodes(seriesUrl, this.appendMoreEpisodes(content, nextContent)));
+            .then((nextContent: string) => {
+                const merged = this.appendMoreEpisodes(content, nextContent);
+                this.loadedMorePages++;
+                if (!this.maxLoadMorePages) {
+                    return this.loadMoreEpisodes(seriesUrl, merged);
+                }
+
+                if (this.loadedMorePages >= this.maxLoadMorePages) {
+                    this.loadedMorePages = 0;
+                    return merged;
+                }
+
+                return this.loadMoreEpisodes(seriesUrl, merged);
+
+            });
     }
 
     private appendMoreEpisodes(originalContent: string, moreContent: string): string {
