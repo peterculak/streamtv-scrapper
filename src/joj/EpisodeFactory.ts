@@ -22,19 +22,33 @@ class EpisodeFactory implements EpisodeFactoryInterface {
                 if (!file.content) {
                     throw new Error(`Episode file ${file.fullPath} was empty`);
                 }
-                const dateAdded = this.extractor.extractDateAdded(file.content);
-                if (!dateAdded) {
-                    this.logger.warn(`Date added not found in ${fullPath}`);
+
+                let meta = {} as EpisodeInterface;
+                try {
+                    meta = this.extractor.episodeSchemaOrgMeta(file.content);
+                } catch (error) {
+                    //cached file is not schema org
                 }
-                let meta = this.extractor.episodeSchemaOrgMeta(file.content);
-                meta.dateAdded = dateAdded;
+
+                if (!Object.keys(meta).length) {
+                    meta = this.extractor.episodeOgMeta(file.content);
+                    const bits = fullPath.split('/');
+                    meta.partOfSeason.name = bits[6];
+                    meta.partOfTVSeries = {name: 'Správy', "@type": "News"};
+                }
+
+                const dateAdded = this.extractor.extractDateAdded(file.content);
+                if (!meta.dateAdded && dateAdded) {
+                    meta.dateAdded = dateAdded;
+                }
+
                 return meta;
             })
             .then((meta: EpisodeInterface) => {
-                // console.log(meta);
                 const seriesPath = fullPath.substr(0, fullPath.lastIndexOf('/'));
                 const bits = fullPath.split('/');
                 const episodeFileName = bits[bits.length - 1];
+
                 const iframeFileSource = `${seriesPath}/iframes/${episodeFileName}`;
 
                 this.logger.debug(`Iframe file ${iframeFileSource}`);

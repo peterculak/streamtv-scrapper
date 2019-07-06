@@ -115,10 +115,11 @@ describe('Archive Service', () => {
 
             mockEpisodeFactory.fromCache.mockImplementation(() => {
                 const episode: EpisodeInterface = {
+                    name: 'name',
                     episodeNumber: 1,
                     partOfTVSeries: {},
                     mp4: ['http://foo.bar/video.mp4'],
-                    partOfSeason: {seasonNumber: 1}
+                    partOfSeason: {seasonNumber: 1, name: 'season name'}
                 };
                 return new Promise((resolve => resolve(episode)));
             });
@@ -147,10 +148,11 @@ describe('Archive Service', () => {
 
             mockEpisodeFactory.fromCache.mockImplementation(() => {
                 const episode: EpisodeInterface = {
+                    name: 'name',
                     episodeNumber: 1,
                     partOfTVSeries: {},
                     mp4: ['http://foo.bar/video.mp4'],
-                    partOfSeason: {seasonNumber: 1}
+                    partOfSeason: {seasonNumber: 1, name: 'season name'}
                 };
                 return new Promise((resolve => resolve(episode)));
             });
@@ -185,10 +187,11 @@ describe('Archive Service', () => {
 
             mockEpisodeFactory.fromCache.mockImplementation(() => {
                 const episode: EpisodeInterface = {
+                    name: 'name',
                     episodeNumber: 1,
                     partOfTVSeries: {},
                     mp4: ['http://foo.bar/video.mp4'],
-                    partOfSeason: {seasonNumber: 2}
+                    partOfSeason: {seasonNumber: 2, name: 'season name'}
                 };
                 return new Promise((resolve => resolve(episode)));
             });

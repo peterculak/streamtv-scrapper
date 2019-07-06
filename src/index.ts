@@ -5,14 +5,12 @@ import ArchiveServiceInterface from "./joj/ArchiveServiceInterface";
 import SeriesServiceInterface from "./joj/SeriesServiceInterface";
 import * as Pino from "pino";
 import EpisodesServiceInterface from "./joj/EpisodesServiceInterface";
+import {ArchiveIndexInterface} from "./joj/ArchiveIndexInterface";
 
 const chalk = require('chalk');
 const figlet = require('figlet');
 const program = require('commander');
 
-const archiveService = container.get<ArchiveServiceInterface>(CONSTANTS.JOJ_ARCHIVE);
-const archiveCompiler = container.get<ArchiveServiceInterface>(CONSTANTS.JOJ_ARCHIVE);
-const series = container.get<SeriesServiceInterface>(CONSTANTS.JOJ_SERIES);
 const logger = container.get<Pino.Logger>(CONSTANTS.PINO_LOGGER);
 
 require('dotenv').config();
@@ -47,6 +45,15 @@ if (host !== 'joj.sk' && host !== 'plus.joj.sk' && host !== 'wau.joj.sk') {
     process.exit();
 }
 
+let archiveService = container.get<ArchiveServiceInterface>(CONSTANTS.JOJ_ARCHIVE);
+let series = container.get<SeriesServiceInterface>(CONSTANTS.JOJ_SERIES);
+
+if (program.programUrl === 'https://www.joj.sk/najnovsie') {
+    archiveService = container.get<ArchiveServiceInterface>(CONSTANTS.JOJ_NEWS_ARCHIVE);
+    // console.log(archiveService);
+    series = container.get<SeriesServiceInterface>(CONSTANTS.JOJ_NEWS_SERIES);
+}
+
 logger.level = verbosity(program.verbosity);
 
 if (program.concurrency) {
@@ -59,30 +66,30 @@ if (program.encrypt) {
         program.outputHelp(() => 'Please set STREAM_TV_APP_PASSWORD env variable in ./env');
         process.exit();
     } else {
-        archiveCompiler.encryptArchive(host, password);
+        archiveService.cacheArchiveList(host).then((archive: ArchiveIndexInterface) => archiveService.encryptArchive(host, password));
     }
 } else {
     if (!program.programUrl) {
         if (program.fetch && program.compile) {
             fetchSeries(host).then(() =>
-                program.pattern ? archiveCompiler.compileArchiveForProgramRegex(host, program.pattern) : archiveCompiler.compileArchive(host)
+                program.pattern ? archiveService.compileArchiveForProgramRegex(host, program.pattern) : archiveService.compileArchive(host)
             );
         } else if (program.fetch) {//only fetch !compile
             fetchSeries(host);
         } else if (program.compile) {//only compile !fetch
-            program.pattern ? archiveCompiler.compileArchiveForProgramRegex(host, program.pattern).catch((e: Error) => console.log(e))
-                : archiveCompiler.compileArchive(host).catch((e: Error) => console.log(e));
+            program.pattern ? archiveService.compileArchiveForProgramRegex(host, program.pattern).catch((e: Error) => console.log(e))
+                : archiveService.compileArchive(host).catch((e: Error) => console.log(e));
         } else if (program.encrypt) {
 
         }
     } else {
         if (program.fetch && program.compile) {
             series.cacheProgramSeriesIndexPagesForProgram(host, program.programUrl)
-                .then(() => archiveCompiler.compileArchiveForProgram(host, program.programUrl)).catch((e: Error) => console.log(e));
+                .then(() => archiveService.compileArchiveForProgram(host, program.programUrl)).catch((e: Error) => console.log(e));
         } else if (program.fetch) {//only fetch 1 program and not compile
             series.cacheProgramSeriesIndexPagesForProgram(host, program.programUrl).catch((e: Error) => console.log(e));
         } else if (program.compile) {//only compile 1 program and no fetch
-            archiveCompiler.compileArchiveForProgram(host, program.programUrl).catch((e: Error) => console.log(e))
+            archiveService.compileArchiveForProgram(host, program.programUrl).catch((e: Error) => console.log(e))
         } else if (program.encrypt) {
 
         }

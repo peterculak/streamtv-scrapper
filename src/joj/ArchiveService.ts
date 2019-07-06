@@ -9,7 +9,7 @@ import FileSystemInterface from "../FileSystemInterface";
 import LoggerInterface from "../LoggerInterface";
 import ClientInterface from "../ClientInterface";
 import Slug from "./Slug";
-import {ArchiveIndexInterface} from "./ArchiveIndexInterface";
+import {ArchiveIndexInterface, ArchiveIndexItem} from "./ArchiveIndexInterface";
 import EpisodeInterface from "./EpisodeInterface";
 import FileInterface from "../FileInterface";
 import EpisodeFactoryInterface from "./EpisodeFactoryInterface";
@@ -32,17 +32,34 @@ class ArchiveService implements ArchiveServiceInterface {
         @inject(CONSTANTS.LOGGER) private logger: LoggerInterface,
         @inject(CONSTANTS.FILESYSTEM) private filesystem: FileSystemInterface,
         @inject(CONSTANTS.CLIENT) private client: ClientInterface,
-        @inject(CONSTANTS.UNDERSCORE) private _: Underscore.UnderscoreStatic,
+        @inject(CONSTANTS.UNDERSCORE) protected _: Underscore.UnderscoreStatic,
     ) {
     }
 
     cacheArchiveList(host: Host): Promise<ArchiveIndexInterface> {
         this.host = host;
 
-        return this.client.fetch(`https://${host}/archiv`)
+        let url = `https://${host}/archiv`;
+        if (host === 'joj.sk') {
+            url = `https://www.${host}/archiv`;
+        }
+
+        return this.client.fetch(url)
             .then((r: Response) => r.text())
             .then((body: string) => this.filesystem.writeFile(this.cacheDir(), 'archiv.html', body))
             .then((file: FileInterface) => this.extractor.extractArchive(file.content))
+            .then((archive: ArchiveIndexInterface) => {
+                if (host === 'joj.sk') {
+                    archive.unshift({
+                        title: 'Správy',
+                        img: 'https://img.joj.sk/rx/logojoj.png',
+                        url: 'https://www.joj.sk/najnovsie',
+                        slug: 'najnovsie',
+                    });
+                }
+
+                return archive;
+            })
             .then((archive: ArchiveIndexInterface) => this.filesystem.writeFile(this.cacheDir(), 'archive.json', JSON.stringify(archive)))
             .then((file: FileInterface) => JSON.parse(file.content))
             ;
@@ -55,56 +72,6 @@ class ArchiveService implements ArchiveServiceInterface {
         this.logger.info(`Found ${directories.length} cached program folders`);
 
         return this.compileArchiveForDirectories(directories);
-    }
-
-    encryptArchive(host: Host, password: string): void {
-        this.host = host;
-
-        this.filesystem.readFile(`${this.cacheDir()}/archive.json`).then((ar: FileInterface) => {
-            const archive = JSON.parse(ar.content) as Array<any>;
-            archive.map((item: any) => {
-                const slug = item.slug;
-                const programJsonArchive = `${this.cacheDir()}/${slug}/${slug}.json`;
-
-                this.logger.info(`Encrypting ${programJsonArchive}`);
-                const encryptedSlug = uuidv4();
-
-                this.filesystem.readFile(programJsonArchive).then((file: FileInterface) => {
-                    const encrypted = this.encrypt(file.content, password);
-                    const jsonDir = `${this.cacheDir()}/${slug}`;
-
-                    this.filesystem.writeFile(
-                        jsonDir,
-                        encryptedSlug,
-                        encrypted
-                    );
-                });
-
-                item.slug = encryptedSlug;
-                return item;
-            });
-
-            const encryptedArchiveFilename = uuidv4();
-            this.logger.info(`Host ${host}`);
-            this.logger.info(`Encrypted archive ${this.cacheDir()}/${encryptedArchiveFilename}`);
-
-            return this.filesystem.writeFile(this.cacheDir(), encryptedArchiveFilename, this.encrypt(JSON.stringify(archive), password))
-                .then((file: FileInterface) => {
-                    return {host: host, filename: encryptedArchiveFilename}
-                });
-        }).then((r: {host: string, filename: string}) => {
-            return this.filesystem.readFile('./var/cache/channels.json').then((file: FileInterface) => {
-                let channels = {} as any;
-                try {
-                    channels = JSON.parse(this.decrypt(file.content, password));
-                } catch (e) {
-                    channels = JSON.parse(file.content);
-                }
-
-                channels[r.host].datafile = r.filename;
-                return this.filesystem.writeFile('./var/cache', 'channels.json', this.encrypt(JSON.stringify(channels), password));
-            })
-        });
     }
 
     compileArchiveForProgramRegex(host: string, pattern: string): Promise<Array<EpisodeInterface[]>> {
@@ -131,33 +98,69 @@ class ArchiveService implements ArchiveServiceInterface {
         return this.compileArchiveForSlug(slug);
     }
 
-    private encrypt (message: string, password: string): string {
-        const ciphertext = crypto.AES.encrypt(message, password);
-        return ciphertext.toString();
-    }
+    encryptArchive(host: Host, password: string): void {
+        this.host = host;
+        this.logger.info(`Host ${host}`);
 
-    private decrypt(message: string, password: string): string {
-        const bytes = crypto.AES.decrypt(message, password);
-        return bytes.toString(crypto.enc.Utf8);
-    }
+        this.filesystem.readFile(`${this.cacheDir()}/archive.json`).then((ar: FileInterface) => {
+            const archive = JSON.parse(ar.content) as Array<any>;
 
-    private cacheDir(): string {
-        if (!this.host) {
-            throw new Error('Can not determine hostname from url')
-        }
+            this.logger.info(`Archive json length ${archive.length}`);
 
-        return `${this._cacheDirBase}/${this.host}`;
-    }
+            const filtered = archive.filter((item: ArchiveIndexItem) => {
+                const slug = item.slug;
+                const programJsonArchive = `${this.cacheDir()}/${slug}/${slug}.json`;
+                const exists = this.filesystem.existsSync(programJsonArchive);
+                if (!exists) {
+                    this.logger.warn(`Skipping ${slug}`);
+                }
+                return exists;
+            });
 
-    private setHostnameFromUrl(url: string): string {
-        const pattern = new RegExp(/https:\/\/www\.(.*\.sk)/, 'i');
-        const m = url.match(pattern);
-        if (m && m[1]) {
-            this.host = m[1];
-            return m[1];
-        }
+            this.logger.info(`Encrypting ${filtered.length} items`);
 
-        throw new Error(`Can not determine hostname from ${url}`);
+            filtered.map((item: any) => {
+                const slug = item.slug;
+                const programJsonArchive = `${this.cacheDir()}/${slug}/${slug}.json`;
+
+                this.logger.debug(`Encrypting ${programJsonArchive}`);
+                const encryptedSlug = uuidv4();
+
+                this.filesystem.readFile(programJsonArchive).then((file: FileInterface) => {
+                    const encrypted = this.encrypt(file.content, password);
+                    const jsonDir = `${this.cacheDir()}/${slug}`;
+
+                    this.filesystem.writeFile(
+                        jsonDir,
+                        encryptedSlug,
+                        encrypted
+                    );
+                });
+
+                item.slug = encryptedSlug;
+                return item;
+            });
+
+            const encryptedArchiveFilename = uuidv4();
+            this.logger.info(`Encrypted archive ${this.cacheDir()}/${encryptedArchiveFilename}`);
+
+            return this.filesystem.writeFile(this.cacheDir(), encryptedArchiveFilename, this.encrypt(JSON.stringify(filtered), password))
+                .then((file: FileInterface) => {
+                    return {host: host, filename: encryptedArchiveFilename}
+                });
+        }).then((r: {host: string, filename: string}) => {
+            return this.filesystem.readFile('./var/cache/channels.json').then((file: FileInterface) => {
+                let channels = {} as any;
+                try {
+                    channels = JSON.parse(this.decrypt(file.content, password));
+                } catch (e) {
+                    channels = JSON.parse(file.content);
+                }
+
+                channels[r.host].datafile = r.filename;
+                return this.filesystem.writeFile('./var/cache', 'channels.json', this.encrypt(JSON.stringify(channels), password));
+            })
+        });
     }
 
     private compileArchiveForDirectories(directories: Array<string>) {
@@ -184,16 +187,35 @@ class ArchiveService implements ArchiveServiceInterface {
             return new Promise((resolve) => resolve([]));
         }
         return Promise.all(files.map((file: string) => this.episodeMetaData(`${seriesDir}/${file}`)))
+            .then((archive: Array<EpisodeInterface>) => this.ensureUniqueEpisodeNumbers(archive))
             .then((archive: Array<EpisodeInterface>) => archive.filter((item: EpisodeInterface) => item !== undefined && item.mp4.length > 0))
             .then((filteredArchive: Array<EpisodeInterface>) => {
                 this.filesystem.writeFile(
                     jsonDir,
                     `${slug}.json`,
-                    JSON.stringify(this.groupEpisodesBySeason(filteredArchive))
+                    JSON.stringify(this.groupEpisodes(filteredArchive))
                 );
 
                 return filteredArchive;
             });
+    }
+
+    private encrypt (message: string, password: string): string {
+        const ciphertext = crypto.AES.encrypt(message, password);
+        return ciphertext.toString();
+    }
+
+    private decrypt(message: string, password: string): string {
+        const bytes = crypto.AES.decrypt(message, password);
+        return bytes.toString(crypto.enc.Utf8);
+    }
+
+    private cacheDir(): string {
+        if (!this.host) {
+            throw new Error('Can not determine hostname from url')
+        }
+
+        return `${this._cacheDirBase}/${this.host}`;
     }
 
     private episodeMetaData(file: string): Promise<EpisodeInterface> {
@@ -203,15 +225,37 @@ class ArchiveService implements ArchiveServiceInterface {
             this.logger.warn(e.toString());
 
             return {
+                name: '',
                 episodeNumber: 0,
                 partOfTVSeries: {},
-                partOfSeason: {seasonNumber: 0},
+                partOfSeason: {seasonNumber: 0, name: ''},
                 mp4: [],
             };
         });
     }
 
-    private groupEpisodesBySeason(archive: Array<EpisodeInterface>): Array<EpisodeInterface> {
+    /**
+     * Adds unique episode numbers in case they were not provided by source
+     * @param archive
+     */
+    private ensureUniqueEpisodeNumbers(archive: Array<EpisodeInterface>): Array<EpisodeInterface> {
+        let needsAdjusting = false;
+        if (archive.length > 1) {
+            if (archive[0].episodeNumber === archive[1].episodeNumber) {
+                needsAdjusting = true;
+            }
+        }
+        if (needsAdjusting) {
+            return archive.map((item: any, index: number) => {
+                item.episodeNumber = index + 1;
+                return item;
+            });
+        }
+
+        return archive;
+    }
+
+    protected groupEpisodes(archive: Array<EpisodeInterface>): Array<EpisodeInterface> {
         let tvseriesMeta: any = archive[0].partOfTVSeries;
         const seasonMeta: any = {};
         const seasons: Array<number> = [];

@@ -66,7 +66,7 @@ class SeriesService implements SeriesServiceInterface {
             ;
     }
 
-    private getSeriesPagesMeta(seriesArchiveUrl: string): Promise<Array<{ seriesUrl: string, url: string, title: string }>> {
+    protected getSeriesPagesMeta(seriesArchiveUrl: string): Promise<Array<{ seriesUrl: string, url: string, title: string }>> {
         let seriesUrl: string;
         return this.client.fetch(seriesArchiveUrl)
             .then((r: any) => {

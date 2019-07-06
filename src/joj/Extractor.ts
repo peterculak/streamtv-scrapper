@@ -59,6 +59,15 @@ class Extractor implements ExtractorServiceInterface {
         if (!episodesSection.length) {
             episodesSection = $('.b-articles-mobile-listing article');
         }
+        if (!episodesSection.length) {
+            episodesSection = $('article');
+            //todo this can only be running when fetching news not for tv series
+            episodesSection = episodesSection.filter((index: number, element: any) => {
+                // return true;
+                return $('.icons-play', element).length > 0;
+            });
+        }
+
         episodesSection.each((i: number, elem: any) => {
             const a = $('a', elem);
             const subtitle = $('h4.subtitle', elem);
@@ -87,21 +96,15 @@ class Extractor implements ExtractorServiceInterface {
                 }
             }
 
-            // if (!episode) {
-            //     throw new Error('Can not determine episode number from episodeString ${episodeString}');
-            // }
-
-            // if (!date) {
-            //     throw new Error('Can not determine date');
-            // }
-
             const title = a.attr('title');
             const url = a.attr('href');
-            if (episode && title && url) {
+            const image = $('img', a).attr('data-original');
+
+            if (title && url) {
                 episodes.push({
                     title: title,
                     url: url,
-                    img: $('img', a).attr('data-original'),
+                    img: image,
                     date: date,
                     episode: episode,
                 });
@@ -146,7 +149,13 @@ class Extractor implements ExtractorServiceInterface {
 
     public episodeIframeUrl(content: string): string {
         const $ = this.dom.load(content);
-        const iframes = $('section.s-video-detail iframe');
+        let iframes = $('section.s-video-detail iframe');
+        if (!iframes.length) {
+            iframes = $('.b-iframe-video iframe');
+        }
+        if (!iframes.length) {
+            iframes = $('iframe');
+        }
         let url = '';
         if (iframes) {
             iframes.each((i: number, item: any) => {
@@ -167,6 +176,24 @@ class Extractor implements ExtractorServiceInterface {
             string = '';
         }
         return JSON.parse(string);
+    }
+
+    episodeOgMeta(content: string): EpisodeInterface {
+        const $ = this.dom.load(content);
+
+        const episode = {
+            '@type': $("meta[property='og:type']").attr("content"),
+            name: $("meta[property='og:title']").attr("content"),
+            description: $("meta[property='og:description']").attr("content"),
+            url: $("meta[property='og:url']").attr("content"),
+            dateAdded: $("meta[property='publish-date']").attr("content"),
+            image: $("meta[property='og:image']").attr("content"),
+            episodeNumber: 1,
+            partOfSeason: { seasonNumber: 1, name: '' },
+            partOfTVSeries: {},
+            mp4: [],
+        };
+        return episode;
     }
 
     public extractDateAdded(content: string): string {
