@@ -4,7 +4,8 @@ interface EpisodeInterface {
     partOfTVSeries: {},
     partOfSeason: { seasonNumber: number, name: string },
     mp4: Array<string>,
-    dateAdded?: string;
+    dateAdded?: string|Date;
+    timeRequired?: string;
 }
 
 export default EpisodeInterface;

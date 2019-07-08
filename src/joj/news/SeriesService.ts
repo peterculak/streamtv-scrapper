@@ -2,6 +2,8 @@ import {inject, injectable} from "inversify";
 import "reflect-metadata";
 import JojSeriesService from "../SeriesService";
 
+type SeriesPagesMeta = Array<{ seriesUrl: string, url: string, title: string }>;
+
 @injectable()
 class SeriesService extends JojSeriesService {
 
@@ -58,6 +60,16 @@ class SeriesService extends JojSeriesService {
                 },
             ]
         ));
+    }
+
+    /**
+     * every series page is a news category and i want to fetch episodes for all of them
+     * so not filtering out anything
+     * @param programDir
+     * @param seriesPagesMeta
+     */
+    protected getSeriesToCache(programDir: string, seriesPagesMeta: SeriesPagesMeta): SeriesPagesMeta {
+        return seriesPagesMeta;
     }
 }
 

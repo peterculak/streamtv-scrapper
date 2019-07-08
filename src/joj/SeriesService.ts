@@ -10,6 +10,8 @@ import ClientInterface from "../ClientInterface";
 import Slug from "./Slug";
 import FileInterface from "../FileInterface";
 
+type SeriesPagesMeta = Array<{ seriesUrl: string, url: string, title: string }>;
+
 @injectable()
 class SeriesService implements SeriesServiceInterface {
 
@@ -53,19 +55,8 @@ class SeriesService implements SeriesServiceInterface {
                 seriesArchiveUrl = seriesArchiveUrl.replace('archív', 'archiv');
                 return this.getSeriesPagesMeta(seriesArchiveUrl);
             })
-            .then((seriesPagesMeta: Array<{ seriesUrl: string, url: string, title: string }>) => {
-                //idea is to only fetch new series files and if there are no new then run last series
-                //todo will need fixing
-                const filtered = seriesPagesMeta.filter((item: any) => {
-                    const seriesCachedFile = `${programDir}/series/${item.title.replace('/', '-')}.html`;
-                    return !this.filesystem.existsSync(seriesCachedFile);
-                });
-                if (!filtered.length) {
-                    filtered.push(seriesPagesMeta[0]);
-                }
-                return filtered;
-            })
-            .then((seriesPagesMeta: Array<{ seriesUrl: string, url: string, title: string }>) => this.cacheSeriesPages(programDir, seriesPagesMeta))
+            .then((seriesPagesMeta: SeriesPagesMeta) => this.getSeriesToCache(programDir, seriesPagesMeta))
+            .then((seriesPagesMeta: SeriesPagesMeta) => this.cacheSeriesPages(programDir, seriesPagesMeta))
             ;
     }
 
@@ -73,7 +64,21 @@ class SeriesService implements SeriesServiceInterface {
         this.maxLoadMorePages = n;
     }
 
-    protected getSeriesPagesMeta(seriesArchiveUrl: string): Promise<Array<{ seriesUrl: string, url: string, title: string }>> {
+    protected getSeriesToCache(programDir: string, seriesPagesMeta: SeriesPagesMeta): SeriesPagesMeta {
+        //idea is to only fetch new series files and if there are no new then run last series
+        //todo will need fixing
+        const filtered = seriesPagesMeta.filter((item: any) => {
+            const seriesCachedFile = `${programDir}/series/${item.title.replace('/', '-')}.html`;
+            return !this.filesystem.existsSync(seriesCachedFile);
+        });
+        if (!filtered.length) {
+            filtered.push(seriesPagesMeta[0]);
+        }
+
+        return filtered;
+    }
+
+    protected getSeriesPagesMeta(seriesArchiveUrl: string): Promise<SeriesPagesMeta> {
         let seriesUrl: string;
         return this.client.fetch(seriesArchiveUrl)
             .then((r: any) => {
@@ -110,11 +115,6 @@ class SeriesService implements SeriesServiceInterface {
     private loadedMorePages = 0;
     private loadMoreEpisodes(seriesUrl: string, content: string): Promise<string> {
         const loadMoreEpisodesUrl = this.loadMoreEpisodesUrl(seriesUrl, content);
-
-        this.logger.warn(`loadMoreEpisodesUrl ${loadMoreEpisodesUrl}`);
-        this.logger.warn(`max: ${this.maxLoadMorePages}`);
-        this.logger.warn(`loaded: ${this.loadedMorePages}`);
-
         if (!loadMoreEpisodesUrl) {
             return new Promise((resolve) => resolve(content));
         }

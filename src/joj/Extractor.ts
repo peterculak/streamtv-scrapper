@@ -190,12 +190,14 @@ class Extractor implements ExtractorServiceInterface {
     episodeOgMeta(content: string): EpisodeInterface {
         const $ = this.dom.load(content);
 
+        const dateAdded = $('.article-head span.info').data('date') ?
+            $('.article-head span.info').data('date') : $("meta[property='publish-date']").attr("content");
         const episode = {
             '@type': $("meta[property='og:type']").attr("content"),
             name: $("meta[property='og:title']").attr("content"),
             description: $("meta[property='og:description']").attr("content"),
             url: $("meta[property='og:url']").attr("content"),
-            dateAdded: $("meta[property='publish-date']").attr("content"),
+            dateAdded: dateAdded,
             image: $("meta[property='og:image']").attr("content"),
             episodeNumber: 1,
             partOfSeason: { seasonNumber: 1, name: '' },
