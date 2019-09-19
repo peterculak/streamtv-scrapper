@@ -47,7 +47,6 @@ class SeriesService implements SeriesServiceInterface {
             .then((body: string) => this.filesystem.writeFile(programDir, 'index.html', body))
             .then((r: FileInterface) => {
                 let seriesArchiveUrl = this.dom.seriesArchiveUrl(r.content);
-                this.logger.info(`Series archiveUrl ${seriesArchiveUrl}`);
                 if (!seriesArchiveUrl) {
                     seriesArchiveUrl = url;
                 }
@@ -140,7 +139,6 @@ class SeriesService implements SeriesServiceInterface {
     }
 
     private appendMoreEpisodes(originalContent: string, moreContent: string): string {
-        //todo extractor break down into multiple classes or rename it to something like DOM
         return this.dom.appendEpisodes(
             originalContent,
             this.dom.moreEpisodes(moreContent)

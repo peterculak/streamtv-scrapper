@@ -15,7 +15,7 @@ class Client implements ClientInterface {
     }
 
     async fetch(url: string, options?: any): Promise<any> {
-        this.logger.info(`Fetching ${url}`);
+        this.logger.debug(`Fetching ${url}`);
 
         let currentTry = 0;
         let response: Fetch.Response = new Fetch.Response();
@@ -31,7 +31,7 @@ class Client implements ClientInterface {
                     if (currentTry >= this.maxTries) {
                         throw RetryLimitReached.withTriesAndUrl(this.maxTries, url);
                     }
-                    this.logger.info(`Retry ${currentTry} ${url}`);
+                    this.logger.debug(`Retry ${currentTry} ${url}`);
                 } else {
                     break;
                 }

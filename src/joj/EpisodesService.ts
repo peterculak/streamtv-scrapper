@@ -50,7 +50,7 @@ class EpisodesService implements EpisodesServiceInterface {
     protected cacheEpisodePages(seriesDir: string, episodePages: Array<EpisodePageInterface>): Promise<FileInterface[]> {
         return Bluebird.map(
             episodePages,
-            (episode: any) => this.cacheEpisodePage(seriesDir, episode),
+            (episode: any) => this.cacheEpisodePage(seriesDir, episode).catch((error: Error) => this.logger.error(error.toString())),
             { concurrency: this.concurrency }
         );
     }
@@ -59,6 +59,7 @@ class EpisodesService implements EpisodesServiceInterface {
         if (episode.url === undefined) {
             throw new Error('episode.url undefined');
         }
+
         return this.client.fetch(episode.url)
             .then((r: Response) => r.text())
             .then((content: string) => {//this caches page which contains url to video iframe
@@ -75,9 +76,7 @@ class EpisodesService implements EpisodesServiceInterface {
                     .then((r: any) => r.text())
                     .then((content: string) => this.filesystem.writeFile(`${seriesDir}/iframes`, this.episodeFileName(episode), content))
                     ;
-            })
-            // .catch((error: Error) => this.logger.error(error.toString()))
-            ;
+            });
     }
 
     protected episodeFileName(episode: EpisodePageInterface): string {
@@ -85,7 +84,7 @@ class EpisodesService implements EpisodesServiceInterface {
             return `${episode.episode}.html`;
         }
 
-        return `${episode.title}.html`;
+        return `${episode.title.replace('/', '_')}.html`;
     }
 }
 

@@ -12,6 +12,8 @@ class Slug {
             return 'nevinni';
         } else if (url.indexOf('velkonocnavyhra.joj.sk') > -1) {
             return 'velkonocnavyhra';
+        } else if (url.indexOf('-delukse') > -1) {
+            return 'delukse';
         }
 
         const bits = url.split('/');
