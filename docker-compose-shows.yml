@@ -1,0 +1,8 @@
+version: '3.7'
+
+services:
+  scrapper-app:
+    volumes:
+      - ./joj-shows.yml:/opt/streamtv/joj-shows.yml
+    entrypoint: |
+      /bin/sh -c 'npm install; npm run build; node lib/src/index.js -y ./joj-shows.yml | ./node_modules/pino-pretty/bin.js -t "yyyy-mm-dd HH:MM:ss" -c -i 'pid,hostname'; npm run encrypt'

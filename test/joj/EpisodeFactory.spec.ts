@@ -16,6 +16,7 @@ mockLogger.warn = jest.fn();
 mockLogger.info = jest.fn();
 mockLogger.debug = jest.fn();
 mockLogger.trace = jest.fn();
+mockLogger.level = 'silent';
 
 decorate(injectable(), mockLogger);
 container

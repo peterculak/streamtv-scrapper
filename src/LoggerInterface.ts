@@ -4,16 +4,12 @@ interface LogFn {
 }
 
 interface LoggerInterface {
+    level: string;
     fatal: LogFn;
-
     error: LogFn;
-
     warn: LogFn;
-
     info: LogFn;
-
     debug: LogFn;
-
     trace: LogFn;
 }
 

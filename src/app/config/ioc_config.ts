@@ -1,7 +1,5 @@
 import "reflect-metadata";
-
 import { Container } from "inversify";
-
 import CONSTANTS from "./constants";
 import ArchiveServiceInterface from "../../joj/ArchiveServiceInterface";
 import ArchiveService from "../../joj/ArchiveService";
@@ -24,6 +22,12 @@ import ClientInterface from "../../ClientInterface";
 import Client from "../../Client";
 import EpisodeFactoryInterface from "../../joj/EpisodeFactoryInterface";
 import EpisodeFactory from "../../joj/EpisodeFactory";
+import SeriesServiceStrategyInterface from "../../joj/SeriesServiceStrategyInterface";
+import SeriesServiceStrategy from "../../joj/SeriesServiceStrategy";
+import ArchiveServiceStrategyInterface from "../../joj/ArchiveServiceStrategyInterface";
+import ArchiveServiceStrategy from "../../joj/ArchiveServiceStrategy";
+import TVArchiveCompilerInterface from "../../TVArchiveCompilerInterface";
+import TVArchiveCompiler from "../../joj/TVArchiveCompiler";
 const pino = require('pino')();
 const cheerio = require('cheerio');
 const _ = require('underscore');
@@ -43,6 +47,9 @@ container.bind<Underscore.UnderscoreStatic>(CONSTANTS.UNDERSCORE).toConstantValu
 container.bind<LoggerInterface>(CONSTANTS.LOGGER).to(Logger);
 container.bind<ClientInterface>(CONSTANTS.CLIENT).to(Client);
 container.bind<EpisodeFactoryInterface>(CONSTANTS.JOJ_EPISODE_FACTORY).to(EpisodeFactory);
+container.bind<SeriesServiceStrategyInterface>(CONSTANTS.JOJ_SERIES_STRATEGY).to(SeriesServiceStrategy);
+container.bind<ArchiveServiceStrategyInterface>(CONSTANTS.JOJ_ARCHIVE_STRATEGY).to(ArchiveServiceStrategy);
+container.bind<TVArchiveCompilerInterface>(CONSTANTS.JOJ_ARCHIVE_COMPILER).to(TVArchiveCompiler);
 
 const filesystem = new FileSystem(fs, glob, container.get<LoggerInterface>(CONSTANTS.LOGGER));
 container.bind<FileSystemInterface>(CONSTANTS.FILESYSTEM).toConstantValue(filesystem);

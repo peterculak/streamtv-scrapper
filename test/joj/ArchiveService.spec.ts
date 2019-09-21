@@ -20,6 +20,7 @@ mockLogger.warn = jest.fn();
 mockLogger.info = jest.fn();
 mockLogger.debug = jest.fn();
 mockLogger.trace = jest.fn();
+mockLogger.level = 'silent';
 
 decorate(injectable(), mockLogger);
 container
@@ -107,7 +108,7 @@ describe('Archive Service', () => {
 
     describe('compiles archive json file from cache for given program url', () => {
         it('throws error when can not determine slug from url', () => {
-            expect(() => service.compileArchiveForProgram('')).toThrow();
+            expect(() => service.compileArchiveForProgram('joj.sk')).toThrow();
         });
 
         it('creates and stores program archive json file', (done) => {
@@ -124,7 +125,7 @@ describe('Archive Service', () => {
                 return new Promise((resolve => resolve(episode)));
             });
             const expectedArchive = JSON.stringify([{1: {seasonNumber: 1, episodes: [{episodeNumber: 1, mp4: ['http://foo.bar/video.mp4']}]}}]);
-            service.compileArchiveForProgram('http://joj.sk/profesionali').then((r: EpisodeInterface[]) => {
+            service.compileArchiveForProgram('joj.sk', 'http://joj.sk/profesionali').then((r: EpisodeInterface[]) => {
                 expect(mockFilesystem.sync).toHaveBeenCalledWith("**(!iframes)/*.html", {cwd: './var/cache/joj.sk/profesionali/series'});
                 expect(mockEpisodeFactory.fromCache).toHaveBeenCalledWith('./var/cache/joj.sk/profesionali/series/1. seria/1.html');
                 expect(mockFilesystem.writeFile).toHaveBeenCalledWith('./var/cache/joj.sk/profesionali', 'profesionali.json', expectedArchive);

@@ -34,6 +34,10 @@ class Logger implements LoggerInterface {
     trace(message: any) {
         this.pino.trace(message);
     }
+
+    set level(level: "fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent" | string) {
+        this.pino.level = level;
+    }
 }
 
 export default Logger;
