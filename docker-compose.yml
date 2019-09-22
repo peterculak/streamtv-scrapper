@@ -13,6 +13,7 @@ services:
       - ./tsconfig.json:/opt/streamtv/tsconfig.json
       - ./var:/opt/streamtv/var:delegated
       - ./docker/node_modules:/opt/streamtv/node_modules:delegated
+      - ./.config:/opt/streamtv/config
     working_dir: /opt/streamtv
     entrypoint: |
       /bin/sh -c 'npm install; npm run build'

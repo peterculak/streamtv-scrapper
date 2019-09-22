@@ -14,6 +14,7 @@ import ProgramRequest from "../ProgramRequest";
 import SeriesServiceStrategyInterface from "../joj/SeriesServiceStrategyInterface";
 import ArchiveServiceStrategyInterface from "../joj/ArchiveServiceStrategyInterface";
 import TVArchiveCompilerInterface from "../TVArchiveCompilerInterface";
+const Bluebird = require("bluebird");
 
 @injectable()
 class TVArchiveCompiler implements TVArchiveCompilerInterface {
@@ -31,6 +32,8 @@ class TVArchiveCompiler implements TVArchiveCompilerInterface {
         }
 
         this.logger.level = verbosityToLoggerLevel(request.verbosity);
+
+        this.logger.debug(JSON.stringify(request));
 
         if (request.concurrency) {
             container.get<EpisodesServiceInterface>(CONSTANTS.JOJ_EPISODES).setConcurrency(request.concurrency);
@@ -63,26 +66,26 @@ class TVArchiveCompiler implements TVArchiveCompilerInterface {
 
             return v;
         }
+
+        return new Promise((resolve) => resolve('done'));
     }
 
     processYaml(request: YamlProgramRequestInterface): void {
-        request.items.forEach((programme: any) => {
-            try {
-                this.process(new ProgramRequest(
-                    programme.host,
-                    true,
-                    true,
-                    true,
-                    programme.maxLoadMorePages,
-                    programme.url,
-                    '',
-                    1,
-                    programme.concurrency
-                ));
-            } catch (error) {
-                this.logger.error(error.toString());
-            }
-        });
+        Bluebird.map(
+            request.items,
+            (config: any) => this.process(new ProgramRequest(
+                config.host,
+                config.fetch !== undefined ? config.fetch : false,
+                config.encrypt !== undefined ? config.encrypt : false,
+                config.compile !== undefined ? config.compile : false,
+                config.maxLoadMorePages,
+                config.url !== undefined ? config.url : '',
+                config.regexp !== undefined ? config.regexp : '',
+                config.verbosity !== undefined ? config.verbosity : 1,
+                config.concurrency
+            )),
+            { concurrency: 1 }
+        );
     }
 
     private fetchSeries(
@@ -125,7 +128,7 @@ class TVArchiveCompiler implements TVArchiveCompilerInterface {
             if (!password) {
                 throw new Error('Please set STREAM_TV_APP_PASSWORD env variable in ./env');
             } else {
-                archiveService.cacheArchiveList(request.host).then(
+                return archiveService.cacheArchiveList(request.host).then(
                     (archive: ArchiveIndexInterface) => archiveService.encryptArchive(request.host, password)
                 );
             }

@@ -60,7 +60,7 @@ class ArchiveService implements ArchiveServiceInterface {
 
                 return archive;
             })
-            .then((archive: ArchiveIndexInterface) => this.filesystem.writeFile(this.cacheDir(), 'archive.json', JSON.stringify(archive)))
+                .then((archive: ArchiveIndexInterface) => this.filesystem.writeFile(this.cacheDir(), 'archive.json', JSON.stringify(archive)))
             .then((file: FileInterface) => JSON.parse(file.content))
             ;
     }
@@ -98,11 +98,10 @@ class ArchiveService implements ArchiveServiceInterface {
         return this.compileArchiveForSlug(slug);
     }
 
-    encryptArchive(host: Host, password: string): void {
+    encryptArchive(host: Host, password: string) {
         this.host = host;
-        this.logger.info(`Host ${host}`);
 
-        this.filesystem.readFile(`${this.cacheDir()}/archive.json`).then((ar: FileInterface) => {
+        return this.filesystem.readFile(`${this.cacheDir()}/archive.json`).then((ar: FileInterface) => {
             const archive = JSON.parse(ar.content) as Array<any>;
 
             this.logger.info(`Archive json length ${archive.length}`);
@@ -149,7 +148,7 @@ class ArchiveService implements ArchiveServiceInterface {
                     return {host: host, filename: encryptedArchiveFilename}
                 });
         }).then((r: {host: string, filename: string}) => {
-            return this.filesystem.readFile('./var/cache/channels.json').then((file: FileInterface) => {
+            return this.filesystem.readFile(`${this._cacheDirBase}/channels.json`).then((file: FileInterface) => {
                 let channels = {} as any;
                 try {
                     channels = JSON.parse(this.decrypt(file.content, password));
@@ -158,7 +157,7 @@ class ArchiveService implements ArchiveServiceInterface {
                 }
 
                 channels[r.host].datafile = r.filename;
-                return this.filesystem.writeFile('./var/cache', 'channels.json', this.encrypt(JSON.stringify(channels), password));
+                return this.filesystem.writeFile(this._cacheDirBase, 'channels.json', this.encrypt(JSON.stringify(channels), password));
             })
         });
     }
