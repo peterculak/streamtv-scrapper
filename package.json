@@ -10,9 +10,9 @@
     "watch": "jest --watch",
     "refresh": "rm -rf ./node_modules ./package-lock.json && npm install",
     "clean": "find ./var/cache -type f ! -name \"*.*\" -exec rm -rf {} \\;",
-    "encrypt": "npm run clean && node lib/src/index.js -y $STREAM_TV_APP_HOSTS_CONFIG | ./node_modules/pino-pretty/bin.js -t \"yyyy-mm-dd HH:MM:ss\" -c -i \"pid,hostname\"",
-    "news": "node lib/src/index.js -y $STREAM_TV_APP_NEWS_CONFIG | ./node_modules/pino-pretty/bin.js -t \"yyyy-mm-dd HH:MM:ss\" -c -i \"pid,hostname\"",
-    "shows": "node lib/src/index.js -y $STREAM_TV_APP_SHOWS_CONFIG | ./node_modules/pino-pretty/bin.js -t \"yyyy-mm-dd HH:MM:ss\" -c -i \"pid,hostname\""
+    "encrypt": "npm run clean && node lib/src/index.js -vy $STREAM_TV_APP_HOSTS_CONFIG | ./node_modules/pino-pretty/bin.js -t \"yyyy-mm-dd HH:MM:ss\" -c -i \"pid,hostname\"",
+    "news": "node lib/src/index.js -vy $STREAM_TV_APP_NEWS_CONFIG | ./node_modules/pino-pretty/bin.js -t \"yyyy-mm-dd HH:MM:ss\" -c -i \"pid,hostname\"",
+    "shows": "node lib/src/index.js -vy $STREAM_TV_APP_SHOWS_CONFIG | ./node_modules/pino-pretty/bin.js -t \"yyyy-mm-dd HH:MM:ss\" -c -i \"pid,hostname\""
   },
   "main": "./lib/index.js",
   "author": "",

@@ -7,6 +7,8 @@ import YamlProgramRequest from "./YamlProgramRequest";
 import yaml from 'js-yaml'
 import FileInterface from "./FileInterface";
 import TVArchiveCompilerInterface from "./TVArchiveCompilerInterface";
+import LoggerInterface from "./LoggerInterface";
+import Action from "./Action";
 const chalk = require('chalk');
 const figlet = require('figlet');
 const commander = require('commander');
@@ -37,6 +39,7 @@ commander
 
 
 const compiler = container.get<TVArchiveCompilerInterface>(CONSTANTS.JOJ_ARCHIVE_COMPILER);
+container.get<LoggerInterface>(CONSTANTS.LOGGER).level = verbosityToLoggerLevel(commander.verbosity);
 
 if (commander.yaml) {
     filesystem.readFile(commander.yaml)
@@ -52,13 +55,14 @@ if (commander.yaml) {
     try {
         compiler.process(new ProgramRequest(
             commander.host,
-            commander.fetch,
-            commander.encrypt,
-            commander.compile,
-            commander.maxLoadMorePages,
+            new Action(
+                Boolean(commander.fetch),
+                Boolean(commander.compile),
+                Boolean(commander.encrypt)
+            ),
             commander.programUrl,
             commander.regexpPattern,
-            commander.verbosity,
+            commander.maxLoadMorePages,
             commander.concurrency
         ));
     } catch (error) {
@@ -70,4 +74,20 @@ if (commander.yaml) {
 
 function increaseVerbosity(v: any, total: number) {
     return total + 1;
+}
+
+function verbosityToLoggerLevel(level: number): string {
+    let v = 'silent';
+
+    if (level === 3) {
+        v = 'trace';
+    }
+    if (level === 2) {
+        v = 'debug';
+    }
+    if (level === 1) {
+        v = 'info';
+    }
+
+    return v;
 }

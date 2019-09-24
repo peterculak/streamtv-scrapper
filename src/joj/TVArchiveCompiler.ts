@@ -14,6 +14,7 @@ import ProgramRequest from "../ProgramRequest";
 import SeriesServiceStrategyInterface from "../joj/SeriesServiceStrategyInterface";
 import ArchiveServiceStrategyInterface from "../joj/ArchiveServiceStrategyInterface";
 import TVArchiveCompilerInterface from "../TVArchiveCompilerInterface";
+import Action from "../Action";
 const Bluebird = require("bluebird");
 
 @injectable()
@@ -30,8 +31,6 @@ class TVArchiveCompiler implements TVArchiveCompilerInterface {
         if (request.maxLoadMorePages) {
             seriesService.setMaxLoadMorePages(request.maxLoadMorePages);
         }
-
-        this.logger.level = verbosityToLoggerLevel(request.verbosity);
 
         this.logger.debug(JSON.stringify(request));
 
@@ -51,37 +50,23 @@ class TVArchiveCompiler implements TVArchiveCompilerInterface {
             await this.encrypt(request, archiveService);
         }
 
-        function verbosityToLoggerLevel(level: number) {
-            let v = 'silent';
-
-            if (level === 3) {
-                v = 'trace';
-            }
-            if (level === 2) {
-                v = 'debug';
-            }
-            if (level === 1) {
-                v = 'info';
-            }
-
-            return v;
-        }
-
         return new Promise((resolve) => resolve('done'));
     }
 
+    //todo
     processYaml(request: YamlProgramRequestInterface): void {
         Bluebird.map(
             request.items,
             (config: any) => this.process(new ProgramRequest(
                 config.host,
-                config.fetch !== undefined ? config.fetch : false,
-                config.encrypt !== undefined ? config.encrypt : false,
-                config.compile !== undefined ? config.compile : false,
+                new Action(
+                    Boolean(config.fetch),
+                    Boolean(config.compile),
+                    Boolean(config.encrypt)
+                ),
+                config.url,
+                config.pattern,
                 config.maxLoadMorePages,
-                config.url !== undefined ? config.url : '',
-                config.regexp !== undefined ? config.regexp : '',
-                config.verbosity !== undefined ? config.verbosity : 1,
                 config.concurrency
             )),
             { concurrency: 1 }
