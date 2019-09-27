@@ -7,6 +7,7 @@ interface FileSystemInterface {
      */
     existsSync(fullPath: string): boolean;
     readFile(fileName: string): Promise<FileInterface>
+    readFileSync(fileName: string): FileInterface;
     writeFile(dir: string, fileName: string, content: string): Promise<FileInterface>
 
     /**

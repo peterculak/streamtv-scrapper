@@ -27,6 +27,19 @@ class FileSystem implements FileSystemInterface {
         return new Promise((resolve) => resolve({content: buffer, name: filename, fullPath: fullPath}));
     }
 
+    readFileSync(fullPath: string): FileInterface {
+        if (!this.fs.existsSync(fullPath)) {
+            throw new Error(`File ${fullPath} does not exist`);
+        }
+
+        const buffer = this.fs.readFileSync(fullPath, "utf8");
+
+        const bits = fullPath.split('/');
+        const filename = String(bits.pop());
+
+        return {content: buffer, name: filename, fullPath: fullPath};
+    }
+
     writeFile(dir: string, filename: string, content: string): Promise<FileInterface> {
         if (!this.fs.existsSync(dir)) {
             this.fs.mkdirSync(dir, {recursive: true});

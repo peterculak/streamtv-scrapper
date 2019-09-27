@@ -1,12 +1,12 @@
 interface ProgramRequestInterface {
-    host: string;
+    hostname: string;
+    url: string;
     fetch: boolean;
     compile: boolean;
     encrypt: boolean;
     concurrency: number;
     maxLoadMorePages: number;
-    regexpPattern: string;
-    programUrl: string;
+    regexp: string;
 }
 
 export default ProgramRequestInterface;

@@ -1,5 +1,6 @@
 import ProgramRequestInterface from "./ProgramRequestInterface";
 import ActionInterface from "./ActionInterface";
+import Host from "./Host";
 
 class ProgramRequest implements ProgramRequestInterface {
 
@@ -7,21 +8,16 @@ class ProgramRequest implements ProgramRequestInterface {
     private UNLIMITED_LOAD_MORE_PAGES = 0;
 
     constructor(
-        private readonly _host: string,
+        private readonly _host: Host,
         private readonly _action: ActionInterface,
-        private readonly _programUrl?: string,
-        private readonly _regexpPattern?: string,
+        private readonly _url?: string,
+        private readonly _regexp?: string,
         private readonly _maxLoadMorePages?: number,
         private readonly _concurrency?: number
-    ) {
-        this._host = _host.replace('www.', '');
-        if (this._host !== 'joj.sk' && this._host !== 'plus.joj.sk' && this._host !== 'wau.joj.sk') {
-            throw new Error('Invalid host');
-        }
-    }
+    ) {}
 
-    get host(): string {
-        return this._host;
+    get hostname(): string {
+        return this._host.name;
     }
 
     get fetch(): boolean {
@@ -36,12 +32,12 @@ class ProgramRequest implements ProgramRequestInterface {
         return this._action.encrypt;
     }
 
-    get programUrl(): string {
-        return this._programUrl !== undefined ? this._programUrl : '';
+    get url(): string {
+        return this._url !== undefined ? this._url : '';
     }
 
-    get regexpPattern(): string {
-        return this._regexpPattern !== undefined ? this._regexpPattern : '';
+    get regexp(): string {
+        return this._regexp !== undefined ? this._regexp : '';
     }
 
     get maxLoadMorePages(): number {

@@ -1,6 +1,6 @@
 class InvalidAction extends Error {
     static empty(): InvalidAction {
-        return new this(`No action selected`);
+        return new this('No action selected');
     };
 }
 

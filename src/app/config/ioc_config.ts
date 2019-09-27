@@ -28,11 +28,14 @@ import ArchiveServiceStrategyInterface from "../../joj/ArchiveServiceStrategyInt
 import ArchiveServiceStrategy from "../../joj/ArchiveServiceStrategy";
 import TVArchiveCompilerInterface from "../../TVArchiveCompilerInterface";
 import TVArchiveCompiler from "../../joj/TVArchiveCompiler";
+import ValidatorInterface from "../../validator/ValidatorInterface";
+import HostValidator from "../../validator/HostValidator";
 const pino = require('pino')();
 const cheerio = require('cheerio');
 const _ = require('underscore');
 const fs = require('fs');
 const glob = require("glob");
+import yaml from 'js-yaml';
 
 let container = new Container();
 container.bind<ArchiveServiceInterface>(CONSTANTS.JOJ_ARCHIVE).to(ArchiveService);
@@ -53,5 +56,11 @@ container.bind<TVArchiveCompilerInterface>(CONSTANTS.JOJ_ARCHIVE_COMPILER).to(TV
 
 const filesystem = new FileSystem(fs, glob, container.get<LoggerInterface>(CONSTANTS.LOGGER));
 container.bind<FileSystemInterface>(CONSTANTS.FILESYSTEM).toConstantValue(filesystem);
+
+const hostsYml = process.env.STREAM_TV_APP_HOSTS_CONFIG as string;
+const hosts = yaml.safeLoad(filesystem.readFileSync(hostsYml).content);
+container.bind<ValidatorInterface>(CONSTANTS.HOST_VALIDATOR).toConstantValue(
+    new HostValidator(hosts.map((conf: any) => conf.host))
+);
 
 export { container };

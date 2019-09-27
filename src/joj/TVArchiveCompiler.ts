@@ -9,13 +9,9 @@ import LoggerInterface from "../LoggerInterface";
 import EpisodesServiceInterface from "../joj/EpisodesServiceInterface";
 import {ArchiveIndexInterface} from "../joj/ArchiveIndexInterface";
 import ProgramRequestInterface from "../ProgramRequestInterface";
-import YamlProgramRequestInterface from "../YamlProgramRequestInterface";
-import ProgramRequest from "../ProgramRequest";
 import SeriesServiceStrategyInterface from "../joj/SeriesServiceStrategyInterface";
 import ArchiveServiceStrategyInterface from "../joj/ArchiveServiceStrategyInterface";
 import TVArchiveCompilerInterface from "../TVArchiveCompilerInterface";
-import Action from "../Action";
-const Bluebird = require("bluebird");
 
 @injectable()
 class TVArchiveCompiler implements TVArchiveCompilerInterface {
@@ -26,8 +22,8 @@ class TVArchiveCompiler implements TVArchiveCompilerInterface {
     ) {}
 
     async process(request: ProgramRequestInterface) {
-        const seriesService = this.seriesServiceStrategy.fetchService(request.programUrl);
-        const archiveService = this.archiveServiceStrategy.fetchService(request.programUrl);
+        const seriesService = this.seriesServiceStrategy.fetchService(request.url);
+        const archiveService = this.archiveServiceStrategy.fetchService(request.url);
         if (request.maxLoadMorePages) {
             seriesService.setMaxLoadMorePages(request.maxLoadMorePages);
         }
@@ -53,68 +49,48 @@ class TVArchiveCompiler implements TVArchiveCompilerInterface {
         return new Promise((resolve) => resolve('done'));
     }
 
-    //todo
-    processYaml(request: YamlProgramRequestInterface): void {
-        Bluebird.map(
-            request.items,
-            (config: any) => this.process(new ProgramRequest(
-                config.host,
-                new Action(
-                    Boolean(config.fetch),
-                    Boolean(config.compile),
-                    Boolean(config.encrypt)
-                ),
-                config.url,
-                config.pattern,
-                config.maxLoadMorePages,
-                config.concurrency
-            )),
-            { concurrency: 1 }
-        );
-    }
-
     private fetchSeries(
         request: ProgramRequestInterface,
         seriesService: SeriesServiceInterface,
         archiveService: ArchiveServiceInterface
     ) {
-        if (request.programUrl) {
-            return seriesService.cacheProgramSeriesIndexPagesForProgram(request.host, request.programUrl);
+        if (request.url) {
+            return seriesService.cacheProgramSeriesIndexPagesForProgram(request.hostname, request.url);
         }
-        return archiveService.cacheArchiveList(request.host)
+        return archiveService.cacheArchiveList(request.hostname)
             .then((archive: Array<{}>) => {
                 this.logger.info(`Archive contains ${archive.length} items`);
-                if (request.regexpPattern) {
-                    this.logger.debug(`RegExp filter pattern /${request.regexpPattern}/`);
+                if (request.regexp) {
+                    this.logger.debug(`RegExp filter pattern /${request.regexp}/`);
                     archive = archive.filter(
-                        (element: any) => element.title.match(new RegExp(request.regexpPattern, 'i')) !== null
+                        (element: any) => element.title.match(new RegExp(request.regexp, 'i')) !== null
                     );
                     this.logger.info(`Filtered archive contains ${archive.length} item(s)`);
                 }
                 return archive;
             })
-            .then((archive: Array<{}>) => seriesService.cacheProgramSeriesIndexPages(request.host, archive))
+            .then((archive: Array<{}>) => seriesService.cacheProgramSeriesIndexPages(request.hostname, archive))
             .catch((err: Error) => this.logger.error(err));
     }
 
     private compileArchive(request: ProgramRequestInterface, archiveService: ArchiveServiceInterface) {
-        if (request.programUrl) {
-            return archiveService.compileArchiveForProgram(request.host, request.programUrl);
-        } else if (request.regexpPattern) {
-            return archiveService.compileArchiveForProgramRegex(request.host, request.regexpPattern);
+        if (request.url) {
+            return archiveService.compileArchiveForProgram(request.hostname, request.url);
+        } else if (request.regexp) {
+            return archiveService.compileArchiveForProgramRegex(request.hostname, request.regexp);
         } else {
-            return archiveService.compileArchive(request.host);
+            return archiveService.compileArchive(request.hostname);
         }
     }
 
     private encrypt(request: ProgramRequestInterface, archiveService: ArchiveServiceInterface) {
-        if (!request.programUrl && !request.regexpPattern) {
+        if (!request.url && !request.regexp) {
             const password = process.env.STREAM_TV_APP_PASSWORD;
             if (!password) {
                 throw new Error('Please set STREAM_TV_APP_PASSWORD env variable in ./env');
             } else {
-                return archiveService.cacheArchiveList(request.host).then(
-                    (archive: ArchiveIndexInterface) => archiveService.encryptArchive(request.host, password)
+                return archiveService.cacheArchiveList(request.hostname).then(
+                    (archive: ArchiveIndexInterface) => archiveService.encryptArchive(request.hostname, password)
                 );
             }
         }

@@ -3,12 +3,12 @@ import {container} from "./app/config/ioc_config";
 import CONSTANTS from "./app/config/constants";
 import FileSystemInterface from "./FileSystemInterface";
 import ProgramRequest from "./ProgramRequest";
-import YamlProgramRequest from "./YamlProgramRequest";
-import yaml from 'js-yaml'
+import yaml from 'js-yaml';
 import FileInterface from "./FileInterface";
 import TVArchiveCompilerInterface from "./TVArchiveCompilerInterface";
 import LoggerInterface from "./LoggerInterface";
 import Action from "./Action";
+import Host from "./Host";
 const chalk = require('chalk');
 const figlet = require('figlet');
 const commander = require('commander');
@@ -31,7 +31,7 @@ commander
     .option('-e, --encrypt', 'Encrypt final json files')
     .option('-r, --concurrency <number>', 'How many concurrent requests to send when fetching episode pages', parseFloat)
     .option('-m, --maxLoadMorePages <number>', 'How many max more pages should try to load when there is a load more link on page', parseFloat)
-    .option('-x, --pattern [pattern]', 'Regexp pattern. Will fetch archives for all programmes with matching in title')
+    .option('-x, --regexp [pattern]', 'Regexp pattern. Will fetch archives for all programmes with matching in title')
     .option('-p, --programUrl [program]', 'Fetch all episodes for program url')
     .option('-v, --verbosity', 'Verbosity level', increaseVerbosity, 0)
     .option('-y, --yaml [yaml]', 'Yaml config with programmes')
@@ -44,9 +44,20 @@ container.get<LoggerInterface>(CONSTANTS.LOGGER).level = verbosityToLoggerLevel(
 if (commander.yaml) {
     filesystem.readFile(commander.yaml)
         .then((file: FileInterface) => yaml.safeLoad(file.content))
-        .then((yamlDefinition: any) => {
-            compiler.processYaml(new YamlProgramRequest(yamlDefinition));
-        });
+        .then((yamlDefinition: Array<any>) => yamlDefinition.map(
+            (config: any) => compiler.process(new ProgramRequest(
+                Host.fromString(config.host),
+                new Action(
+                    Boolean(config.fetch),
+                    Boolean(config.compile),
+                    Boolean(config.encrypt)
+                ),
+                config.url,
+                config.regexp,
+                config.maxLoadMorePages,
+                config.concurrency
+            ))
+        ));
 } else {
     if (!process.argv.slice(2).length) {
         commander.outputHelp();
@@ -54,14 +65,14 @@ if (commander.yaml) {
     }
     try {
         compiler.process(new ProgramRequest(
-            commander.host,
+            Host.fromString(commander.host),
             new Action(
                 Boolean(commander.fetch),
                 Boolean(commander.compile),
                 Boolean(commander.encrypt)
             ),
             commander.programUrl,
-            commander.regexpPattern,
+            commander.regexp,
             commander.maxLoadMorePages,
             commander.concurrency
         ));
