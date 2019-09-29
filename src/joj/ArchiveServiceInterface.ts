@@ -1,12 +1,13 @@
 import EpisodeInterface from "./EpisodeInterface";
 import {ArchiveIndexInterface} from "./ArchiveIndexInterface";
+import Host from "../Host";
 
 interface ArchiveServiceInterface {
-    cacheArchiveList(host: string): Promise<ArchiveIndexInterface>;
-    compileArchiveForProgram(host: string, url?: string): Promise<EpisodeInterface[]>;
-    compileArchive(host: string): Promise<Array<EpisodeInterface[]>>;
-    compileArchiveForProgramRegex(host: string, pattern: string): Promise<Array<EpisodeInterface[]>>;
-    encryptArchive(host: string, password: string): void;
+    cacheArchiveList(host: Host): Promise<ArchiveIndexInterface>;
+    compileArchiveForProgram(host: Host, url?: string): Promise<EpisodeInterface[]>;
+    compileArchive(host: Host): Promise<Array<EpisodeInterface[]>>;
+    compileArchiveForProgramRegex(host: Host, pattern: string): Promise<Array<EpisodeInterface[]>>;
+    encryptArchive(host: Host, password: string): void;
 }
 
 export default ArchiveServiceInterface;

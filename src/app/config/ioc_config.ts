@@ -58,9 +58,11 @@ const filesystem = new FileSystem(fs, glob, container.get<LoggerInterface>(CONST
 container.bind<FileSystemInterface>(CONSTANTS.FILESYSTEM).toConstantValue(filesystem);
 
 const hostsYml = process.env.STREAM_TV_APP_HOSTS_CONFIG as string;
-const hosts = yaml.safeLoad(filesystem.readFileSync(hostsYml).content);
-container.bind<ValidatorInterface>(CONSTANTS.HOST_VALIDATOR).toConstantValue(
-    new HostValidator(hosts.map((conf: any) => conf.host))
-);
+const hosts = yaml.safeLoad(fs.readFileSync(hostsYml));
+if (typeof hosts.map === "function") {
+    container.bind<ValidatorInterface>(CONSTANTS.HOST_VALIDATOR).toConstantValue(
+        new HostValidator(hosts.map((conf: any) => conf.host))
+    );
+}
 
 export { container };

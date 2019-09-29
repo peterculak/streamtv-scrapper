@@ -1,0 +1,10 @@
+version: '3.7'
+
+services:
+  scrapper-app:
+    volumes:
+      - ./coverage:/opt/streamtv/coverage
+      - ./jest.config.js:/opt/streamtv/jest.config.js
+      - ./setupJest.ts:/opt/streamtv/setupJest.ts
+    entrypoint: |
+      /bin/sh -c 'npm install; npm run test'

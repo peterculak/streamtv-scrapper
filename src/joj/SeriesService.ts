@@ -9,6 +9,7 @@ import LoggerInterface from "../LoggerInterface";
 import ClientInterface from "../ClientInterface";
 import Slug from "./Slug";
 import FileInterface from "../FileInterface";
+import Host from "../Host";
 
 type SeriesPagesMeta = Array<{ seriesUrl: string, url: string, title: string }>;
 
@@ -26,7 +27,7 @@ class SeriesService implements SeriesServiceInterface {
     ) {
     }
 
-    cacheProgramSeriesIndexPages(host: string, archive: Array<{}>): Promise<any> {
+    cacheProgramSeriesIndexPages(host: Host, archive: Array<{}>): Promise<any> {
         return archive.reduce((promiseChain: any, currentProgram: any) => {
             return promiseChain.then((chainResults: any) => {
                 return this.cacheProgramSeriesIndexPagesForProgram(host, currentProgram.url).then((currentResult: any) => [...chainResults, currentResult]);
@@ -34,13 +35,13 @@ class SeriesService implements SeriesServiceInterface {
         }, Promise.resolve([]));
     }
 
-    cacheProgramSeriesIndexPagesForProgram(host: string, url: string): Promise<any> {
+    cacheProgramSeriesIndexPagesForProgram(host: Host, url: string): Promise<any> {
         const slug = Slug.fromProgramUrl(url);
         if (!slug) {
             throw Error(`Can not determine slug from url ${url}`);
         }
 
-        const programDir = `./var/cache/${host}/${slug}`;
+        const programDir = `./var/cache/${host.name}/${slug}`;
 
         return this.client.fetch(url)
             .then((r: any) => r.text())

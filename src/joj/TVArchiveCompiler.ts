@@ -55,9 +55,9 @@ class TVArchiveCompiler implements TVArchiveCompilerInterface {
         archiveService: ArchiveServiceInterface
     ) {
         if (request.url) {
-            return seriesService.cacheProgramSeriesIndexPagesForProgram(request.hostname, request.url);
+            return seriesService.cacheProgramSeriesIndexPagesForProgram(request.host, request.url);
         }
-        return archiveService.cacheArchiveList(request.hostname)
+        return archiveService.cacheArchiveList(request.host)
             .then((archive: Array<{}>) => {
                 this.logger.info(`Archive contains ${archive.length} items`);
                 if (request.regexp) {
@@ -69,17 +69,17 @@ class TVArchiveCompiler implements TVArchiveCompilerInterface {
                 }
                 return archive;
             })
-            .then((archive: Array<{}>) => seriesService.cacheProgramSeriesIndexPages(request.hostname, archive))
+            .then((archive: Array<{}>) => seriesService.cacheProgramSeriesIndexPages(request.host, archive))
             .catch((err: Error) => this.logger.error(err));
     }
 
     private compileArchive(request: ProgramRequestInterface, archiveService: ArchiveServiceInterface) {
         if (request.url) {
-            return archiveService.compileArchiveForProgram(request.hostname, request.url);
+            return archiveService.compileArchiveForProgram(request.host, request.url);
         } else if (request.regexp) {
-            return archiveService.compileArchiveForProgramRegex(request.hostname, request.regexp);
+            return archiveService.compileArchiveForProgramRegex(request.host, request.regexp);
         } else {
-            return archiveService.compileArchive(request.hostname);
+            return archiveService.compileArchive(request.host);
         }
     }
 
@@ -89,8 +89,8 @@ class TVArchiveCompiler implements TVArchiveCompilerInterface {
             if (!password) {
                 throw new Error('Please set STREAM_TV_APP_PASSWORD env variable in ./env');
             } else {
-                return archiveService.cacheArchiveList(request.hostname).then(
-                    (archive: ArchiveIndexInterface) => archiveService.encryptArchive(request.hostname, password)
+                return archiveService.cacheArchiveList(request.host).then(
+                    (archive: ArchiveIndexInterface) => archiveService.encryptArchive(request.host, password)
                 );
             }
         }

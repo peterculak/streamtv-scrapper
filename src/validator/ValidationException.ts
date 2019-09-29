@@ -1,6 +1,6 @@
 class ValidationException extends Error {
     static invalid(): ValidationException {
-        return new ValidationException('Validation Exception Occured');
+        return new this('Validation Exception Occurred');
     }
 }
 

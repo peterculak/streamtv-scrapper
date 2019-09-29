@@ -16,8 +16,8 @@ class ProgramRequest implements ProgramRequestInterface {
         private readonly _concurrency?: number
     ) {}
 
-    get hostname(): string {
-        return this._host.name;
+    get host(): Host {
+        return this._host;
     }
 
     get fetch(): boolean {

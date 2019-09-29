@@ -1,5 +1,7 @@
+import Host from "./Host";
+
 interface ProgramRequestInterface {
-    hostname: string;
+    host: Host;
     url: string;
     fetch: boolean;
     compile: boolean;

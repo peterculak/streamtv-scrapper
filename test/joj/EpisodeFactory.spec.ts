@@ -46,6 +46,7 @@ const mockExtractor = () => {
 };
 mockExtractor.episodeSchemaOrgMeta = jest.fn();
 mockExtractor.episodeMp4Urls = jest.fn();
+mockExtractor.extractDateAdded = jest.fn();
 decorate(injectable(), mockExtractor);
 container
     .rebind<ExtractorServiceInterface>(CONSTANTS.JOJ_EXTRACTOR)

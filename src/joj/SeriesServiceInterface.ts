@@ -1,6 +1,8 @@
+import Host from "../Host";
+
 interface SeriesServiceInterface {
-    cacheProgramSeriesIndexPages(host: string, archive: Array<{}>): Promise<any>;
-    cacheProgramSeriesIndexPagesForProgram(host: string, programUrl: string): Promise<any>;
+    cacheProgramSeriesIndexPages(host: Host, archive: Array<{}>): Promise<any>;
+    cacheProgramSeriesIndexPagesForProgram(host: Host, programUrl: string): Promise<any>;
     setMaxLoadMorePages(n: number): void;
 }
 
