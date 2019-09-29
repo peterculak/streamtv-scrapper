@@ -50,6 +50,20 @@ class Extractor implements ExtractorServiceInterface {
         return meta;
     }
 
+    public newsSeriesPagesMetaData(content: string): Array<{ url: string, title: string }> {
+        const $ = this.dom.load(content);
+        let row = $('nav.e-tab-nav').html();
+        if (row === null || row === undefined) {
+            row = '';
+        }
+        const meta: Array<{ url: string, title: string }> = [];
+        $('ul.nav > li > a', row).each((i: number, elem: any) => {
+            meta.push({url: $(elem).attr('href'), title: $(elem).text().trim()});
+        });
+
+        return meta;
+    }
+
     public episodePagesList(content: string): Array<EpisodePageInterface> {
         const $ = this.dom.load(content);
         const episodes: Array<EpisodePageInterface> = [];

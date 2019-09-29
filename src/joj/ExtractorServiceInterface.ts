@@ -7,6 +7,7 @@ interface ExtractorServiceInterface {
     episodeIframeUrl(content: string): string;
     seriesArchiveUrl(content: string): string;
     seriesPagesMetaData(content: string): Array<{ id: string, title: string }>;
+    newsSeriesPagesMetaData(content: string): Array<{ url: string, title: string }>;
     appendEpisodes(originalContent: string, moreContent: string): string;
     moreEpisodes(content: string): string;
     loadMoreEpisodesLink(content: string): string;

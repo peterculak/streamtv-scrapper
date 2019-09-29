@@ -19,13 +19,12 @@ class SeriesService implements SeriesServiceInterface {
     protected maxLoadMorePages: number|null = null;
 
     constructor(
-        @inject(CONSTANTS.JOJ_EPISODES) private episodeService: EpisodesServiceInterface,
-        @inject(CONSTANTS.JOJ_EXTRACTOR) private dom: ExtractorServiceInterface,
-        @inject(CONSTANTS.LOGGER) private logger: LoggerInterface,
-        @inject(CONSTANTS.FILESYSTEM) private filesystem: FileSystemInterface,
-        @inject(CONSTANTS.CLIENT) private client: ClientInterface,
-    ) {
-    }
+        @inject(CONSTANTS.JOJ_EPISODES) protected episodeService: EpisodesServiceInterface,
+        @inject(CONSTANTS.JOJ_EXTRACTOR) protected dom: ExtractorServiceInterface,
+        @inject(CONSTANTS.LOGGER) protected logger: LoggerInterface,
+        @inject(CONSTANTS.FILESYSTEM) protected filesystem: FileSystemInterface,
+        @inject(CONSTANTS.CLIENT) protected client: ClientInterface,
+    ) {}
 
     cacheProgramSeriesIndexPages(host: Host, archive: Array<{}>): Promise<any> {
         return archive.reduce((promiseChain: any, currentProgram: any) => {
@@ -120,6 +119,7 @@ class SeriesService implements SeriesServiceInterface {
         }
 
         this.logger.debug(`Loading more from ${loadMoreEpisodesUrl}`);
+
         return this.client.fetch(loadMoreEpisodesUrl)
             .then((r: any) => r.text())
             .then((nextContent: string) => {
@@ -135,7 +135,6 @@ class SeriesService implements SeriesServiceInterface {
                 }
 
                 return this.loadMoreEpisodes(seriesUrl, merged);
-
             });
     }
 
@@ -167,3 +166,4 @@ class SeriesService implements SeriesServiceInterface {
 }
 
 export default SeriesService;
+export {SeriesService, SeriesPagesMeta};
