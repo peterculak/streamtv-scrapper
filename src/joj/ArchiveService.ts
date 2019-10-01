@@ -8,7 +8,7 @@ import CONSTANTS from "../app/config/constants";
 import FileSystemInterface from "../FileSystemInterface";
 import LoggerInterface from "../LoggerInterface";
 import ClientInterface from "../ClientInterface";
-import Slug from "./Slug";
+import Slug from "../Slug";
 import {ArchiveIndexInterface, ArchiveIndexItem} from "./ArchiveIndexInterface";
 import EpisodeInterface from "./EpisodeInterface";
 import FileInterface from "../FileInterface";
@@ -24,12 +24,12 @@ class ArchiveService implements ArchiveServiceInterface {
     constructor(
         @inject(CONSTANTS.JOJ_EXTRACTOR) private extractor: ExtractorServiceInterface,
         @inject(CONSTANTS.JOJ_EPISODE_FACTORY) private episodeFactory: EpisodeFactoryInterface,
+        @inject(CONSTANTS.SLUGS) private slug: Slug,
         @inject(CONSTANTS.LOGGER) private logger: LoggerInterface,
         @inject(CONSTANTS.FILESYSTEM) private filesystem: FileSystemInterface,
         @inject(CONSTANTS.CLIENT) private client: ClientInterface,
         @inject(CONSTANTS.UNDERSCORE) protected _: Underscore.UnderscoreStatic,
-    ) {
-    }
+    ) {}
 
     cacheArchiveList(host: Host): Promise<ArchiveIndexInterface> {
         let url = `https://${host.name}/archiv`;
@@ -67,7 +67,7 @@ class ArchiveService implements ArchiveServiceInterface {
 
     compileArchiveForProgramRegex(host: Host, pattern: string): Promise<Array<EpisodeInterface[]>> {
         const directories = this.filesystem.sync(`${this.cacheDir(host.name)}/*/`)
-            .filter((element: any) => Slug.fromPath(element).match(new RegExp(pattern, 'i')) !== null);
+            .filter((element: any) => this.slug.fromPath(element).match(new RegExp(pattern, 'i')) !== null);
 
         this.logger.info(`Matching ${directories.length} folder(s) for regex ${pattern}`);
 
@@ -77,12 +77,12 @@ class ArchiveService implements ArchiveServiceInterface {
     compileArchiveForProgram(host: Host, url: string): Promise<EpisodeInterface[]> {
         this.logger.info(`Compiling json for ${url}`);
 
-        const slug = Slug.fromProgramUrl(url);
+        const slug = this.slug.fromProgramUrl(url);
         if (!slug) {
             throw Error(`Can not determine slug from url ${url}`);
         }
 
-        return this.compileArchiveForSlug(host, slug);
+        return this.compileArchiveForSlug(host, String(slug));
     }
 
     encryptArchive(host: Host, password: string) {
@@ -149,7 +149,7 @@ class ArchiveService implements ArchiveServiceInterface {
 
     private compileArchiveForDirectories(host: Host, directories: Array<string>) {
         return directories.map((directory: string) => {
-            const slug = Slug.fromPath(directory);
+            const slug = this.slug.fromPath(directory);
             if (!slug) {
                 throw Error(`Can not determine slug from directory ${directory}`);
             }

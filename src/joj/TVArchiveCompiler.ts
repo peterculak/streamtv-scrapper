@@ -2,7 +2,7 @@ import {inject, injectable} from "inversify";
 import "reflect-metadata";
 import CONSTANTS from "../app/config/constants";
 
-import {container} from "../app/config/ioc_config";
+import container from "../app/config/ioc_config";
 import ArchiveServiceInterface from "../joj/ArchiveServiceInterface";
 import SeriesServiceInterface from "../joj/SeriesServiceInterface";
 import LoggerInterface from "../LoggerInterface";

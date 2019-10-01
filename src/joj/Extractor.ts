@@ -3,19 +3,21 @@ import "reflect-metadata";
 import ExtractorServiceInterface from "./ExtractorServiceInterface";
 import CONSTANTS from "../app/config/constants";
 import {ArchiveIndexInterface} from "./ArchiveIndexInterface";
-import Slug from "./Slug";
+import Slug from "../Slug";
 import EpisodeInterface from "./EpisodeInterface";
 import EpisodePageInterface from "./EpisodePageInterface";
 
 @injectable()
 class Extractor implements ExtractorServiceInterface {
     constructor(
+        @inject(CONSTANTS.SLUGS) private slug: Slug,
         @inject(CONSTANTS.CHEERIO) private dom: CheerioAPI
     ) {}
 
     public extractArchive(content: string): ArchiveIndexInterface {
         const $ = this.dom.load(content);
         const archive: ArchiveIndexInterface = [];
+        const slug = this.slug;
 
         $('div.b-i-archive-list > div.row').each(function (i: number, elem: any) {
             const url = $('.w-title > a', elem).attr('href');
@@ -23,7 +25,7 @@ class Extractor implements ExtractorServiceInterface {
                 title: $('.w-title', elem).text().trim(),
                 img: $('.w-title img', elem).attr('data-original'),
                 url: url,
-                slug: Slug.fromProgramUrl(url),
+                slug: slug.fromProgramUrl(url),
             });
         });
 

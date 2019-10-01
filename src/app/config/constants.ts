@@ -9,6 +9,8 @@ const CONSTANTS = {
     JOJ_EXTRACTOR: Symbol.for("JojExtractor"),
     JOJ_EPISODE_FACTORY: Symbol.for("JojEpisodeFactory"),
     JOJ_ARCHIVE_COMPILER: Symbol.for("JojArchiveCompiler"),
+    SLUGS_CONFIG: Symbol.for("SlugsConfig"),
+    SLUGS: Symbol.for("Slugs"),
     HOST_VALIDATOR: Symbol.for("HostValidator"),
     LOGGER: Symbol.for("Logger"),
     FILESYSTEM: Symbol.for("FileSystem"),

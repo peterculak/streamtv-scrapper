@@ -7,7 +7,7 @@ import ExtractorServiceInterface from "./ExtractorServiceInterface";
 import FileSystemInterface from "../FileSystemInterface";
 import LoggerInterface from "../LoggerInterface";
 import ClientInterface from "../ClientInterface";
-import Slug from "./Slug";
+import Slug from "../Slug";
 import FileInterface from "../FileInterface";
 import Host from "../Host";
 
@@ -21,6 +21,7 @@ class SeriesService implements SeriesServiceInterface {
     constructor(
         @inject(CONSTANTS.JOJ_EPISODES) protected episodeService: EpisodesServiceInterface,
         @inject(CONSTANTS.JOJ_EXTRACTOR) protected dom: ExtractorServiceInterface,
+        @inject(CONSTANTS.SLUGS) protected slug: Slug,
         @inject(CONSTANTS.LOGGER) protected logger: LoggerInterface,
         @inject(CONSTANTS.FILESYSTEM) protected filesystem: FileSystemInterface,
         @inject(CONSTANTS.CLIENT) protected client: ClientInterface,
@@ -35,7 +36,7 @@ class SeriesService implements SeriesServiceInterface {
     }
 
     cacheProgramSeriesIndexPagesForProgram(host: Host, url: string): Promise<any> {
-        const slug = Slug.fromProgramUrl(url);
+        const slug = this.slug.fromProgramUrl(url);
         if (!slug) {
             throw Error(`Can not determine slug from url ${url}`);
         }

@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { Container } from "inversify";
+import { Container, injectable } from "inversify";
 import CONSTANTS from "./constants";
 import ArchiveServiceInterface from "../../joj/ArchiveServiceInterface";
 import ArchiveService from "../../joj/ArchiveService";
@@ -36,6 +36,8 @@ const _ = require('underscore');
 const fs = require('fs');
 const glob = require("glob");
 import yaml from 'js-yaml';
+import SlugsConfigInterface from "../../SlugsConfigInterface";
+import Slug from "../../Slug";
 
 let container = new Container();
 container.bind<ArchiveServiceInterface>(CONSTANTS.JOJ_ARCHIVE).to(ArchiveService);
@@ -53,16 +55,25 @@ container.bind<EpisodeFactoryInterface>(CONSTANTS.JOJ_EPISODE_FACTORY).to(Episod
 container.bind<SeriesServiceStrategyInterface>(CONSTANTS.JOJ_SERIES_STRATEGY).to(SeriesServiceStrategy);
 container.bind<ArchiveServiceStrategyInterface>(CONSTANTS.JOJ_ARCHIVE_STRATEGY).to(ArchiveServiceStrategy);
 container.bind<TVArchiveCompilerInterface>(CONSTANTS.JOJ_ARCHIVE_COMPILER).to(TVArchiveCompiler);
+container.bind<Slug>(CONSTANTS.SLUGS).to(Slug);
 
 const filesystem = new FileSystem(fs, glob, container.get<LoggerInterface>(CONSTANTS.LOGGER));
 container.bind<FileSystemInterface>(CONSTANTS.FILESYSTEM).toConstantValue(filesystem);
 
 const hostsYml = process.env.STREAM_TV_APP_HOSTS_CONFIG as string;
-const hosts = yaml.safeLoad(fs.readFileSync(hostsYml));
-if (typeof hosts.map === "function") {
-    container.bind<ValidatorInterface>(CONSTANTS.HOST_VALIDATOR).toConstantValue(
-        new HostValidator(hosts.map((conf: any) => conf.host))
-    );
+let hosts = [];
+if (fs.existsSync(hostsYml)) {
+    hosts = yaml.safeLoad(fs.readFileSync(hostsYml));
 }
+container.bind<ValidatorInterface>(CONSTANTS.HOST_VALIDATOR).toConstantValue(
+    new HostValidator(hosts.map((conf: any) => conf.host))
+);
 
-export { container };
+const slugsConfigYml = process.env.STREAM_TV_APP_SLUGS_CONFIG as string;
+let slugsConfig = {};
+if (fs.existsSync(slugsConfigYml)) {
+    slugsConfig = yaml.safeLoad(fs.readFileSync(slugsConfigYml));
+}
+container.bind<SlugsConfigInterface>(CONSTANTS.SLUGS_CONFIG).toConstantValue(slugsConfig);
+
+export default container;

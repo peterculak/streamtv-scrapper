@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import CONSTANTS from "./app/config/constants";
-import {container} from "./app/config/ioc_config";
+import container from "./app/config/ioc_config";
 import ValidatorInterface from "./validator/ValidatorInterface";
 const hostValidator = container.get<ValidatorInterface>(CONSTANTS.HOST_VALIDATOR);
 

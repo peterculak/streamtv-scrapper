@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import {container} from "./app/config/ioc_config";
+import container from "./app/config/ioc_config";
 import CONSTANTS from "./app/config/constants";
 import FileSystemInterface from "./FileSystemInterface";
 import ProgramRequest from "./ProgramRequest";
