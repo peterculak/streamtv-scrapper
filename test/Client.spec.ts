@@ -3,7 +3,7 @@ import ClientInterface from "../src/ClientInterface";
 const fetch = require('jest-fetch-mock');
 import "reflect-metadata";
 import { decorate, injectable } from "inversify";
-import container from "../src/app/config/ioc_config";
+import container from "../src/app/config/container";
 import CONSTANTS from "../src/app/config/constants";
 import LoggerInterface from "../src/LoggerInterface";
 const mockLogger = () => {};//todo possibly store in __mocks__

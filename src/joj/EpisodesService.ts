@@ -20,8 +20,7 @@ class EpisodesService implements EpisodesServiceInterface {
         @inject(CONSTANTS.LOGGER) protected logger: LoggerInterface,
         @inject(CONSTANTS.FILESYSTEM) protected filesystem: FileSystemInterface,
         @inject(CONSTANTS.CLIENT) protected client: ClientInterface,
-    ) {
-    }
+    ) {}
 
     cacheSeriesEpisodes(files: Array<string>): Promise<any> {
         return Promise.all(

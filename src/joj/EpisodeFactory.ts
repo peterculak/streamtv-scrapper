@@ -16,6 +16,7 @@ class EpisodeFactory implements EpisodeFactoryInterface {
         @inject(CONSTANTS.LOGGER) private logger: LoggerInterface,
     ) {}
 
+    //todo custom exceptions
     fromCache(fullPath: string): Promise<EpisodeInterface> {
         return this.filesystem.readFile(fullPath)
             .then((file: FileInterface) => {

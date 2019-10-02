@@ -1,5 +1,5 @@
 import {decorate, injectable} from "inversify";
-import container from "../../src/app/config/ioc_config";
+import container from "../../src/app/config/container";
 import LoggerInterface from "../../src/LoggerInterface";
 import CONSTANTS from "../../src/app/config/constants";
 import ClientInterface from "../../src/ClientInterface";

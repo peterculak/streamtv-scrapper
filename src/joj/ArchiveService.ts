@@ -31,18 +31,14 @@ class ArchiveService implements ArchiveServiceInterface {
         @inject(CONSTANTS.UNDERSCORE) protected _: Underscore.UnderscoreStatic,
     ) {}
 
+    //todo fix this
     cacheArchiveList(host: Host): Promise<ArchiveIndexInterface> {
-        let url = `https://${host.name}/archiv`;
-        if (host.name === 'joj.sk') {
-            url = `https://www.${host.name}/archiv`;
-        }
-
-        return this.client.fetch(url)
+        return this.client.fetch(host.archiveUrl)
             .then((r: Response) => r.text())
             .then((body: string) => this.filesystem.writeFile(this.cacheDir(host.name), 'archiv.html', body))
             .then((file: FileInterface) => this.extractor.extractArchive(file.content))
             .then((archive: ArchiveIndexInterface) => {
-                if (host.name === 'joj.sk') {
+                if (host.name === 'www.joj.sk') {
                     archive.unshift({
                         title: 'Správy',
                         img: 'https://img.joj.sk/rx/logojoj.png',
@@ -132,8 +128,51 @@ class ArchiveService implements ArchiveServiceInterface {
                 .then((file: FileInterface) => {
                     return {host: host, filename: encryptedArchiveFilename}
                 });
-        }).then((r: {host: Host, filename: string}) => {
-            return this.filesystem.readFile(`${this._cacheDirBase}/channels.json`).then((file: FileInterface) => {
+        }).then((r: { host: Host, filename: string }) => this.updateChannelsIndex(r.host, r.filename, password));
+    }
+
+    protected groupEpisodes(archive: Array<EpisodeInterface>): Array<EpisodeInterface> {
+        let tvseriesMeta: any = archive[0].partOfTVSeries;
+        const seasonMeta: any = {};
+        const seasons: Array<number> = [];
+
+        //populate seasons details
+        this._.each(archive, (item: any) => {
+            const currentSeason = Object.assign({}, item.partOfSeason);
+
+            let seasonNumber = 1;
+            if (item.partOfSeason.seasonNumber) {
+                seasonNumber = parseInt(item.partOfSeason.seasonNumber);
+            }
+
+            if (!this._.contains(seasons, seasonNumber)) {
+                seasonMeta[seasonNumber] = currentSeason;
+                seasons.push(seasonNumber);
+            }
+        });
+
+        const episodesBySeason = this._.groupBy(archive, (item: { partOfSeason: { seasonNumber: number } }) => item.partOfSeason.seasonNumber ? item.partOfSeason.seasonNumber : 1);
+
+        //this is to remove repeated data and sort by episode number
+        seasons.forEach((seasonNumber: number) => {
+            this._.each(episodesBySeason[seasonNumber], (item: any) => {
+                delete item.partOfTVSeries;
+                delete item.partOfSeason;
+                return item;
+            });
+            const unique = this._.uniq(episodesBySeason[seasonNumber], (episode: EpisodeInterface) => episode.episodeNumber);
+            seasonMeta[seasonNumber].episodes = this._.sortBy(unique, (episode: EpisodeInterface) => -episode.episodeNumber);
+        });
+
+        tvseriesMeta.seasons = this._.toArray(seasonMeta);
+
+        return tvseriesMeta;
+    }
+
+    private updateChannelsIndex(host: Host, filename: string, password: string) {
+        const channels = `${this._cacheDirBase}/channels`;
+        if (this.filesystem.existsSync(channels)) {
+            return this.filesystem.readFile(channels).then((file: FileInterface) => {
                 let channels = {} as any;
                 try {
                     channels = JSON.parse(this.decrypt(file.content, password));
@@ -141,10 +180,18 @@ class ArchiveService implements ArchiveServiceInterface {
                     channels = JSON.parse(file.content);
                 }
 
-                channels[r.host.name].datafile = r.filename;
-                return this.filesystem.writeFile(this._cacheDirBase, 'channels.json', this.encrypt(JSON.stringify(channels), password));
+                channels[host.name] = {};
+                channels[host.name].datafile = filename;
+                channels[host.name].image = host.image;
+                return this.filesystem.writeFile(this._cacheDirBase, 'channels', this.encrypt(JSON.stringify(channels), password));
             })
-        });
+        } else {
+            let channels = {} as any;
+            channels[host.name] = {};
+            channels[host.name].datafile = filename;
+            channels[host.name].image = host.image;
+            return this.filesystem.writeFile(this._cacheDirBase, 'channels', this.encrypt(JSON.stringify(channels), password));
+        }
     }
 
     private compileArchiveForDirectories(host: Host, directories: Array<string>) {
@@ -184,7 +231,7 @@ class ArchiveService implements ArchiveServiceInterface {
             });
     }
 
-    private encrypt (message: string, password: string): string {
+    private encrypt(message: string, password: string): string {
         const ciphertext = crypto.AES.encrypt(message, password);
         return ciphertext.toString();
     }
@@ -237,44 +284,6 @@ class ArchiveService implements ArchiveServiceInterface {
         }
 
         return archive;
-    }
-
-    protected groupEpisodes(archive: Array<EpisodeInterface>): Array<EpisodeInterface> {
-        let tvseriesMeta: any = archive[0].partOfTVSeries;
-        const seasonMeta: any = {};
-        const seasons: Array<number> = [];
-
-        //populate seasons details
-        this._.each(archive, (item: any) => {
-            const currentSeason = Object.assign({}, item.partOfSeason);
-
-            let seasonNumber = 1;
-            if (item.partOfSeason.seasonNumber) {
-                seasonNumber = parseInt(item.partOfSeason.seasonNumber);
-            }
-
-            if (!this._.contains(seasons, seasonNumber)) {
-                seasonMeta[seasonNumber] = currentSeason;
-                seasons.push(seasonNumber);
-            }
-        });
-
-        const episodesBySeason = this._.groupBy(archive, (item: { partOfSeason: { seasonNumber: number } }) => item.partOfSeason.seasonNumber ? item.partOfSeason.seasonNumber : 1);
-
-        //this is to remove repeated data and sort by episode number
-        seasons.forEach((seasonNumber: number) => {
-            this._.each(episodesBySeason[seasonNumber], (item: any) => {
-                delete item.partOfTVSeries;
-                delete item.partOfSeason;
-                return item;
-            });
-            const unique = this._.uniq(episodesBySeason[seasonNumber], (episode: EpisodeInterface) => episode.episodeNumber);
-            seasonMeta[seasonNumber].episodes = this._.sortBy(unique, (episode: EpisodeInterface) => -episode.episodeNumber);
-        });
-
-        tvseriesMeta.seasons = this._.toArray(seasonMeta);
-
-        return tvseriesMeta;
     }
 }
 

@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import {decorate, injectable} from "inversify";
-import container from "../../src/app/config/ioc_config";
+import container from "../../src/app/config/container";
 import ClientInterface from "../../src/ClientInterface";
 import CONSTANTS from "../../src/app/config/constants";
 import FileSystemInterface from "../../src/FileSystemInterface";

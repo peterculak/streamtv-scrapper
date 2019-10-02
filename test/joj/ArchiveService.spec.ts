@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import {decorate, injectable} from "inversify";
-import container from "../../src/app/config/ioc_config";
+import container from "../../src/app/config/container";
 import ClientInterface from "../../src/ClientInterface";
 import CONSTANTS from "../../src/app/config/constants";
 import ArchiveServiceInterface from "../../src/joj/ArchiveServiceInterface";
@@ -97,7 +97,7 @@ describe('Archive Service', () => {
         mockExtractor.extractArchive.mockImplementation(() => {
             return new Promise((resolve) => resolve(expectedArchive));
         });
-        service.cacheArchiveList(new Host('joj.sk', mockHostValidator)).then((actualArchive: ArchiveIndexInterface) => {
+        service.cacheArchiveList(new Host('joj.sk', '', mockHostValidator)).then((actualArchive: ArchiveIndexInterface) => {
             done();
             expect(mockFilesystem.writeFile).toHaveBeenCalledWith(expect.any(String), expect.any(String), responseContent);
             expect(mockExtractor.extractArchive).toHaveBeenCalledWith(responseContent);
@@ -114,7 +114,7 @@ describe('Archive Service', () => {
 
     describe('compiles archive json file from cache for given program url', () => {
         it('throws error when can not determine slug from url', () => {
-            expect(() => service.compileArchiveForProgram(new Host('joj.sk', mockHostValidator))).toThrow();
+            expect(() => service.compileArchiveForProgram(new Host('joj.sk', '', mockHostValidator))).toThrow();
         });
 
         it('creates and stores program archive json file', (done) => {
@@ -131,7 +131,7 @@ describe('Archive Service', () => {
                 return new Promise((resolve => resolve(episode)));
             });
             const expectedArchive = JSON.stringify([{1: {seasonNumber: 1, episodes: [{episodeNumber: 1, mp4: ['http://foo.bar/video.mp4']}]}}]);
-            service.compileArchiveForProgram(new Host('joj.sk', mockHostValidator), 'http://joj.sk/profesionali').then((r: EpisodeInterface[]) => {
+            service.compileArchiveForProgram(new Host('joj.sk', '', mockHostValidator), 'http://joj.sk/profesionali').then((r: EpisodeInterface[]) => {
                 expect(mockFilesystem.sync).toHaveBeenCalledWith("**(!iframes)/*.html", {cwd: './var/cache/joj.sk/profesionali/series'});
                 expect(mockEpisodeFactory.fromCache).toHaveBeenCalledWith('./var/cache/joj.sk/profesionali/series/1. seria/1.html');
                 // expect(mockFilesystem.writeFile).toHaveBeenCalledWith('./var/cache/joj.sk/profesionali', 'profesionali.json', expectedArchive);
@@ -165,7 +165,7 @@ describe('Archive Service', () => {
             });
 
             const expectedArchive = JSON.stringify([{1: {seasonNumber: 1, episodes: [{episodeNumber: 1, mp4: ['http://foo.bar/video.mp4']}]}}]);
-            service.compileArchive(new Host('joj.sk', mockHostValidator)).then((r: Array<EpisodeInterface[]>) => {
+            service.compileArchive(new Host('joj.sk', '', mockHostValidator)).then((r: Array<EpisodeInterface[]>) => {
                 expect(mockFilesystem.writeFile.mock.calls.length).toBe(1);
                 expect(mockFilesystem.sync.mock.calls[0][0]).toBe('./var/cache/joj.sk/*/');
                 expect(mockFilesystem.sync.mock.calls[1][0]).toBe('**(!iframes)/*.html');
@@ -204,7 +204,7 @@ describe('Archive Service', () => {
             });
 
             const expectedArchive = JSON.stringify([{2: {seasonNumber: 2, episodes: [{episodeNumber: 1, mp4: ['http://foo.bar/video.mp4']}]}}]);
-            service.compileArchiveForProgramRegex(new Host('joj.sk', mockHostValidator), regex).then((r: Array<EpisodeInterface[]>) => {
+            service.compileArchiveForProgramRegex(new Host('joj.sk', '', mockHostValidator), regex).then((r: Array<EpisodeInterface[]>) => {
                 expect(mockFilesystem.writeFile.mock.calls.length).toBe(1);
                 expect(mockFilesystem.sync.mock.calls[0][0]).toBe('./var/cache/joj.sk/*/');
                 expect(mockFilesystem.sync.mock.calls[1][0]).toBe('**(!iframes)/*.html');

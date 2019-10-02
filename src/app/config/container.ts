@@ -36,8 +36,10 @@ const _ = require('underscore');
 const fs = require('fs');
 const glob = require("glob");
 import yaml from 'js-yaml';
-import SlugsConfigInterface from "../../SlugsConfigInterface";
+import {HostInterface, SlugsConfigInterface} from "./ConfigInterface";
 import Slug from "../../Slug";
+import ConfigInterface from "./ConfigInterface";
+import Config from "./Config";
 
 let container = new Container();
 container.bind<ArchiveServiceInterface>(CONSTANTS.JOJ_ARCHIVE).to(ArchiveService);
@@ -57,23 +59,16 @@ container.bind<ArchiveServiceStrategyInterface>(CONSTANTS.JOJ_ARCHIVE_STRATEGY).
 container.bind<TVArchiveCompilerInterface>(CONSTANTS.JOJ_ARCHIVE_COMPILER).to(TVArchiveCompiler);
 container.bind<Slug>(CONSTANTS.SLUGS).to(Slug);
 
+const configYml = process.env.STREAM_TV_APP_CONFIG as string;
+const configYmlContent = yaml.safeLoad(fs.readFileSync(configYml));
+const config = Config.fromYml(configYmlContent);
+container.bind<ConfigInterface>(CONSTANTS.CONFIG).toConstantValue(config);
+container.bind<ValidatorInterface>(CONSTANTS.HOST_VALIDATOR).toConstantValue(
+    new HostValidator((config.hosts || []).map((conf: HostInterface) => conf.name))
+);
+container.bind<SlugsConfigInterface>(CONSTANTS.SLUGS_CONFIG).toConstantValue(config.slugs);
+
 const filesystem = new FileSystem(fs, glob, container.get<LoggerInterface>(CONSTANTS.LOGGER));
 container.bind<FileSystemInterface>(CONSTANTS.FILESYSTEM).toConstantValue(filesystem);
-
-const hostsYml = process.env.STREAM_TV_APP_HOSTS_CONFIG as string;
-let hosts = [];
-if (fs.existsSync(hostsYml)) {
-    hosts = yaml.safeLoad(fs.readFileSync(hostsYml));
-}
-container.bind<ValidatorInterface>(CONSTANTS.HOST_VALIDATOR).toConstantValue(
-    new HostValidator(hosts.map((conf: any) => conf.host))
-);
-
-const slugsConfigYml = process.env.STREAM_TV_APP_SLUGS_CONFIG as string;
-let slugsConfig = {};
-if (fs.existsSync(slugsConfigYml)) {
-    slugsConfig = yaml.safeLoad(fs.readFileSync(slugsConfigYml));
-}
-container.bind<SlugsConfigInterface>(CONSTANTS.SLUGS_CONFIG).toConstantValue(slugsConfig);
 
 export default container;

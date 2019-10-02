@@ -5,7 +5,7 @@ class Action implements ActionInterface {
     constructor(
         private readonly _fetch: boolean,
         private readonly _compile: boolean,
-        private readonly _encrypt: boolean
+        private readonly _encrypt: boolean = false
     ) {
         if (!_fetch && !_compile && !_encrypt) {
             throw InvalidAction.empty();

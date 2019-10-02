@@ -1,5 +1,5 @@
 import jest from "jest";
-import container from "../../src/app/config/ioc_config";
+import container from "../../src/app/config/container";
 import CONSTANTS from "../../src/app/config/constants";
 import ExtractorServiceInterface from "../../src/joj/ExtractorServiceInterface";
 import fs from 'fs';

@@ -11,6 +11,7 @@ const CONSTANTS = {
     JOJ_ARCHIVE_COMPILER: Symbol.for("JojArchiveCompiler"),
     SLUGS_CONFIG: Symbol.for("SlugsConfig"),
     SLUGS: Symbol.for("Slugs"),
+    CONFIG: Symbol.for("Config"),
     HOST_VALIDATOR: Symbol.for("HostValidator"),
     LOGGER: Symbol.for("Logger"),
     FILESYSTEM: Symbol.for("FileSystem"),

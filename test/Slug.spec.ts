@@ -1,5 +1,5 @@
 import each from 'jest-each';
-import container from "../src/app/config/ioc_config";
+import container from "../src/app/config/container";
 import Slug from "../src/Slug";
 import CONSTANTS from "../src/app/config/constants";
 import SlugsConfig from "../src/SlugsConfig";
