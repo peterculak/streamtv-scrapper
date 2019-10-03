@@ -8,7 +8,7 @@ require('dotenv').config();
 import container from "./app/config/container";
 import CONSTANTS from "./app/config/constants";
 import FileSystemInterface from "./FileSystemInterface";
-import ProgramRequest from "./ProgramRequest";
+import Request from "./request/Request";
 import TVArchiveCompilerInterface from "./TVArchiveCompilerInterface";
 import LoggerInterface from "./LoggerInterface";
 import Action from "./Action";
@@ -18,6 +18,9 @@ const chalk = require('chalk');
 const figlet = require('figlet');
 const commander = require('commander');
 const filesystem = container.get<FileSystemInterface>(CONSTANTS.FILESYSTEM);
+import NewsRequest from "./request/NewsRequest";
+import ShowsRequest from "./request/ShowsRequest";
+import EncryptRequest from "./request/EncryptRequest";
 
 console.log(
     chalk.red(
@@ -53,46 +56,19 @@ const config = container.get<ConfigInterface>(CONSTANTS.CONFIG);
 
 if (commander.action) {
     if (commander.action === 'news') {
-        const conf = config.news;
-        if (conf) {
-            conf.map((c: NewsItem) => compiler.process(new ProgramRequest(
-                Host.fromConfig({name: c.host}),
-                new Action(
-                    true,
-                    true,
-                ),
-                c.url,
-                '',
-                c.maxLoadMorePages,
-                c.concurrency
-            )));
+        const newsConfig = config.news;
+        if (newsConfig) {
+            newsConfig.map((conf: NewsItem) => compiler.process(NewsRequest.fromConfig(conf)));
         }
     } else if (commander.action === 'shows') {
         const conf = config.shows;
         if (conf) {
-            conf.map((c: Show) => compiler.process(new ProgramRequest(
-                Host.fromConfig({name: c.host}),
-                new Action(
-                    true,
-                    true,
-                ),
-                c.url,
-                '',
-                undefined,
-                c.concurrency
-            )));
+            conf.map((c: Show) => compiler.process(ShowsRequest.fromConfig(c)));
         }
     } else if (commander.action === 'encrypt') {
         const conf = config.hosts;
         if (conf) {
-            conf.map((hostConf: HostInterface) => compiler.process(new ProgramRequest(
-                Host.fromConfig(hostConf),
-                new Action(
-                    false,
-                    false,
-                    true,
-                ),
-            )));
+            conf.map((hostConf: HostInterface) => compiler.process(EncryptRequest.fromConfig(hostConf)));
         }
     }
 } else {
@@ -101,14 +77,14 @@ if (commander.action) {
         process.exit();
     }
     try {
-        compiler.process(new ProgramRequest(
-            Host.fromConfig({name: commander.host}),
+        compiler.process(new Request(
             new Action(
                 Boolean(commander.fetch),
                 Boolean(commander.compile),
                 Boolean(commander.encrypt)
             ),
             commander.programUrl,
+            new Host(commander.host),
             commander.regexp,
             commander.maxLoadMorePages,
             commander.concurrency

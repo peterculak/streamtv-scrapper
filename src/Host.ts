@@ -8,7 +8,7 @@ const hostValidator = container.get<ValidatorInterface>(CONSTANTS.HOST_VALIDATOR
 class Host implements HostInterface {
     constructor(
         private readonly _name: string,
-        private readonly _image: string,
+        private readonly _image?: string,
         private readonly validator: ValidatorInterface = hostValidator
     ) {
         validator.validate(_name);
@@ -23,7 +23,7 @@ class Host implements HostInterface {
     }
 
     get image(): string {
-        return this._image;
+        return this._image || '';
     }
 
     get archiveUrl(): string {
