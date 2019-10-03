@@ -14,6 +14,7 @@ interface NewsItem {
     url: string;
     concurrency?: number;
     maxLoadMorePages?: number;
+    image?: string;
 }
 interface MappedSlug {
     urlContains: string;
@@ -24,6 +25,7 @@ interface SlugsConfigInterface {
     excluded?: Array<string>;
 }
 interface ConfigInterface {
+    cacheDir: string;
     hosts: Array<HostInterface>;
     shows?: Array<Show>;
     news?: Array<NewsItem>;

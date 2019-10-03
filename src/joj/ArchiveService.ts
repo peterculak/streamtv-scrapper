@@ -15,35 +15,40 @@ import FileInterface from "../FileInterface";
 import EpisodeFactoryInterface from "./EpisodeFactoryInterface";
 import * as crypto from "crypto-js";
 import Host from "../Host";
+import ConfigInterface, {NewsItem} from "../app/config/ConfigInterface";
 const uuidv4 = require('uuid/v4');
 
 @injectable()
 class ArchiveService implements ArchiveServiceInterface {
-    private readonly _cacheDirBase: string = './var/cache';
+    private readonly _cacheDirBase: string = this.config.cacheDir;
 
     constructor(
-        @inject(CONSTANTS.JOJ_EXTRACTOR) private extractor: ExtractorServiceInterface,
-        @inject(CONSTANTS.JOJ_EPISODE_FACTORY) private episodeFactory: EpisodeFactoryInterface,
-        @inject(CONSTANTS.SLUGS) private slug: Slug,
-        @inject(CONSTANTS.LOGGER) private logger: LoggerInterface,
-        @inject(CONSTANTS.FILESYSTEM) private filesystem: FileSystemInterface,
-        @inject(CONSTANTS.CLIENT) private client: ClientInterface,
-        @inject(CONSTANTS.UNDERSCORE) protected _: Underscore.UnderscoreStatic,
+        @inject(CONSTANTS.CONFIG) private readonly config: ConfigInterface,
+        @inject(CONSTANTS.JOJ_EXTRACTOR) private readonly extractor: ExtractorServiceInterface,
+        @inject(CONSTANTS.JOJ_EPISODE_FACTORY) private readonly episodeFactory: EpisodeFactoryInterface,
+        @inject(CONSTANTS.SLUGS) private readonly slug: Slug,
+        @inject(CONSTANTS.LOGGER) private readonly logger: LoggerInterface,
+        @inject(CONSTANTS.FILESYSTEM) private readonly filesystem: FileSystemInterface,
+        @inject(CONSTANTS.CLIENT) private readonly client: ClientInterface,
+        @inject(CONSTANTS.UNDERSCORE) protected readonly _: Underscore.UnderscoreStatic,
     ) {}
 
-    //todo fix this
     cacheArchiveList(host: Host): Promise<ArchiveIndexInterface> {
         return this.client.fetch(host.archiveUrl)
             .then((r: Response) => r.text())
             .then((body: string) => this.filesystem.writeFile(this.cacheDir(host.name), 'archiv.html', body))
             .then((file: FileInterface) => this.extractor.extractArchive(file.content))
             .then((archive: ArchiveIndexInterface) => {
-                if (host.name === 'www.joj.sk') {
-                    archive.unshift({
-                        title: 'Správy',
-                        img: 'https://img.joj.sk/rx/logojoj.png',
-                        url: 'https://www.joj.sk/najnovsie',
-                        slug: 'najnovsie',
+                if (this.config.news) {
+                    this.config.news.map((item: NewsItem) => {
+                        if (item.host === host.name) {
+                            archive.unshift({
+                                title: item.name,
+                                img: item.image || '',
+                                url: item.url,
+                                slug: this.slug.fromProgramUrl(item.url),
+                            });
+                        }
                     });
                 }
 

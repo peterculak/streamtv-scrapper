@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+const fs = require('fs');
+if (!fs.existsSync('./.env')) {
+    throw new Error('Env file "./.env" does not exist');
+}
+require('dotenv').config();
+
 import container from "./app/config/container";
 import CONSTANTS from "./app/config/constants";
 import FileSystemInterface from "./FileSystemInterface";
@@ -12,8 +18,6 @@ const chalk = require('chalk');
 const figlet = require('figlet');
 const commander = require('commander');
 const filesystem = container.get<FileSystemInterface>(CONSTANTS.FILESYSTEM);
-
-require('dotenv').config();
 
 console.log(
     chalk.red(

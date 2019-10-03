@@ -10,6 +10,7 @@ import ClientInterface from "../ClientInterface";
 import Slug from "../Slug";
 import FileInterface from "../FileInterface";
 import Host from "../Host";
+import ConfigInterface from "../app/config/ConfigInterface";
 
 type SeriesPagesMeta = Array<{ seriesUrl: string, url: string, title: string }>;
 
@@ -19,6 +20,7 @@ class SeriesService implements SeriesServiceInterface {
     protected maxLoadMorePages: number|null = null;
 
     constructor(
+        @inject(CONSTANTS.CONFIG) private readonly config: ConfigInterface,
         @inject(CONSTANTS.JOJ_EPISODES) protected episodeService: EpisodesServiceInterface,
         @inject(CONSTANTS.JOJ_EXTRACTOR) protected dom: ExtractorServiceInterface,
         @inject(CONSTANTS.SLUGS) protected slug: Slug,
@@ -41,7 +43,7 @@ class SeriesService implements SeriesServiceInterface {
             throw Error(`Can not determine slug from url ${url}`);
         }
 
-        const programDir = `./var/cache/${host.name}/${slug}`;
+        const programDir = `${this.config.cacheDir}/${host.name}/${slug}`;
 
         return this.client.fetch(url)
             .then((r: any) => r.text())

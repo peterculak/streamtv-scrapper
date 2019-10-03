@@ -2,6 +2,7 @@ import {HostInterface, NewsItem, Show, SlugsConfigInterface, ConfigInterface} fr
 
 class Config implements ConfigInterface {
     private constructor(
+        private readonly _cacheDir: string,
         private readonly _hosts: Array<HostInterface>,
         private readonly _news?: Array<NewsItem>,
         private readonly _shows?: Array<Show>,
@@ -11,11 +12,16 @@ class Config implements ConfigInterface {
     //todo validate?
     static fromYml(ymlDefinition: ConfigInterface): Config {
         return new this(
+            ymlDefinition.cacheDir,
             ymlDefinition.hosts,
             ymlDefinition.news,
             ymlDefinition.shows,
             ymlDefinition.slugs,
         );
+    }
+
+    get cacheDir(): string {
+        return this._cacheDir || './var/cache';
     }
 
     get hosts(): Array<HostInterface> {
