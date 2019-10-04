@@ -3,7 +3,7 @@ coverage/
 node_modules/
 package-lock.json
 
-.env
+.env*
 .config/
 lib/
 var/cache/

@@ -4,7 +4,7 @@ services:
   scrapper-app:
     image: node:alpine
     env_file:
-      - ./.env
+      - ./.env.docker
     volumes:
       - ./src:/opt/streamtv/src:delegated
       - ./test:/opt/streamtv/test:delegated

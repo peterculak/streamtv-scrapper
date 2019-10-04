@@ -6,7 +6,7 @@ import Host from "../Host";
 class NewsRequest extends Request {
     static fromConfig(config: NewsItem): NewsRequest {
         return new this(
-            new Action(true, false),
+            new Action(true, true),
             config.url,
             config.host ? new Host(config.host) : undefined,
             '',
