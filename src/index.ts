@@ -1,8 +1,4 @@
 #!/usr/bin/env node
-const fs = require('fs');
-if (!fs.existsSync('./.env')) {
-    throw new Error('Env file "./.env" does not exist');
-}
 require('dotenv').config();
 
 import container from "./app/config/container";
@@ -33,8 +29,10 @@ if (!filesystem.existsSync(configYml)) {
     throw new Error(`${configYml} does not exist`);
 }
 
+const increaseVerbosity = (v: any, total: number) => total + 1;
+
 commander
-    .version('0.0.1')
+    .version('1.0')
     .description("CLI for scrapping TV channels")
     .option('-h, --host [host]', 'Host to fetch data from')
     .option('-f, --fetch', 'When true it will fetch cache, when false it will compile json from cache')
@@ -45,7 +43,7 @@ commander
     .option('-x, --regexp [pattern]', 'Regexp pattern. Will fetch archives for all programmes with matching in title')
     .option('-p, --programUrl [program]', 'Fetch all episodes for program url')
     .option('-v, --verbosity', 'Verbosity level', increaseVerbosity, 0)
-    .option('-a, --action [yaml]', 'Yaml config with programmes')
+    .option('-a, --action [action]', 'Which action to run')
     .parse(process.argv);
 
 
@@ -54,29 +52,26 @@ container.get<LoggerInterface>(CONSTANTS.LOGGER).level = verbosityToLoggerLevel(
 
 const config = container.get<ConfigInterface>(CONSTANTS.CONFIG);
 
-if (commander.action) {
-    if (commander.action === 'news') {
+switch (commander.action) {
+    case 'news':
         const newsConfig = config.news;
         if (newsConfig) {
-            newsConfig.map((conf: NewsItem) => compiler.process(NewsRequest.fromConfig(conf)));
+            newsConfig.map((c: NewsItem) => compiler.process(NewsRequest.fromConfig(c)));
         }
-    } else if (commander.action === 'shows') {
-        const conf = config.shows;
-        if (conf) {
-            conf.map((c: Show) => compiler.process(ShowsRequest.fromConfig(c)));
+        break;
+    case 'shows':
+        const showsConfig = config.shows;
+        if (showsConfig) {
+            showsConfig.map((c: Show) => compiler.process(ShowsRequest.fromConfig(c)));
         }
-    } else if (commander.action === 'encrypt') {
-        const conf = config.hosts;
-        if (conf) {
-            conf.map((hostConf: HostInterface) => compiler.process(EncryptRequest.fromConfig(hostConf)));
+        break;
+    case 'encrypt':
+        const hostsConf = config.hosts;
+        if (hostsConf) {
+            hostsConf.map((c: HostInterface) => compiler.process(EncryptRequest.fromConfig(c)));
         }
-    }
-} else {
-    if (!process.argv.slice(2).length) {
-        commander.outputHelp();
-        process.exit();
-    }
-    try {
+        break;
+    default:
         compiler.process(new Request(
             new Action(
                 Boolean(commander.fetch),
@@ -89,29 +84,17 @@ if (commander.action) {
             commander.maxLoadMorePages,
             commander.concurrency
         ));
-    } catch (error) {
-        throw error;
-        // commander.outputHelp(() => error.toString());
-        // process.exit();
-    }
-}
-
-function increaseVerbosity(v: any, total: number) {
-    return total + 1;
 }
 
 function verbosityToLoggerLevel(level: number): string {
-    let v = 'silent';
-
-    if (level === 3) {
-        v = 'trace';
+    switch (level) {
+        case 1:
+            return 'info';
+        case 2:
+            return 'debug';
+        case 3:
+            return 'trace';
+        default:
+            return 'silent';
     }
-    if (level === 2) {
-        v = 'debug';
-    }
-    if (level === 1) {
-        v = 'info';
-    }
-
-    return v;
 }

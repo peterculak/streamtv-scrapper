@@ -10,6 +10,7 @@ const CONSTANTS = {
     JOJ_EPISODE_FACTORY: Symbol.for("JojEpisodeFactory"),
     JOJ_ARCHIVE_COMPILER: Symbol.for("JojArchiveCompiler"),
     SLUGS_CONFIG: Symbol.for("SlugsConfig"),
+    SELECTORS_CONFIG: Symbol.for("SelectorsConfig"),
     SLUGS: Symbol.for("Slugs"),
     CONFIG: Symbol.for("Config"),
     HOST_VALIDATOR: Symbol.for("HostValidator"),

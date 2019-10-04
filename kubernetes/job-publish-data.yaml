@@ -1,0 +1,34 @@
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: publish-data
+  namespace: streamtv
+spec:
+  schedule: "*/3 * * * *"
+  successfulJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: bash
+              image: bash:latest
+              volumeMounts:
+                - name: streamtv-cache
+                  mountPath: /opt/streamtv/cache/
+                - name: streamtv-data
+                  mountPath: /opt/streamtv/data/
+              args:
+                - /bin/sh
+                - -c
+                - rm -rf /opt/streamtv/data/*;cp /opt/streamtv/cache/channels /opt/streamtv/data/; find /opt/streamtv/cache/ -type f ! -name "*.*" -exec cp {} /opt/streamtv/data/ \;
+          restartPolicy: Never
+
+          volumes:
+            - name: streamtv-cache
+              persistentVolumeClaim:
+                claimName: streamtv-cache
+            - name: streamtv-data
+              persistentVolumeClaim:
+                claimName: streamtv-data

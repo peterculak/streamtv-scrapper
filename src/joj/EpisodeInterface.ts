@@ -6,6 +6,10 @@ interface EpisodeInterface {
     mp4: Array<string>,
     dateAdded?: string|Date;
     timeRequired?: string;
+    '@type'?: string;
+    description?: string;
+    url?: string;
+    image?: string;
 }
 
 export default EpisodeInterface;

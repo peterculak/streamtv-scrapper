@@ -6,7 +6,7 @@ import Host from "../Host";
 class ShowsRequest extends Request {
     static fromConfig(config: Show): ShowsRequest {
         return new this(
-            new Action(true, false),
+            new Action(true, true),
             config.url,
             config.host ? new Host(config.host) : undefined,
             '',

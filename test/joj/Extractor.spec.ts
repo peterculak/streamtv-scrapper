@@ -24,7 +24,7 @@ describe('JOJ DOM Extractor', () => {
             "title": "15 rokov TV JOJ",
             "img": "https://img.joj.sk/r100x100/4b9a604ecc06e9af92d2cf1ce9e0fd2e",
             "url": "https://www.joj.sk/15-rokov-tv-joj/o-sutazi",
-            "slug": "15-rokov-tv-joj"
+            "slug": "o-sutazi"
         }, {
             "title": "15 rokov TV JOJ - koncerty",
             "img": "https://img.joj.sk/r100x100/0a4873eaf33a74ee4463d4fd6990c2ab",

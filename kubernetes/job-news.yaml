@@ -1,0 +1,38 @@
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: news-scraper
+  namespace: streamtv
+spec:
+  schedule: "0 */1 * * *" #Every hour, at the 0 minute
+  successfulJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: streamtv-scraper
+              image: fr0z3nk0/streamtv-scraper:latest
+              volumeMounts:
+                - name: streamtv-cache
+                  mountPath: /opt/streamtv/var/cache/
+                - name: streamtv-config
+                  mountPath: /opt/streamtv/.config/
+              args:
+                - /bin/sh
+                - -c
+                - npm run news; npm run encrypt
+              envFrom:
+                - configMapRef:
+                    name: scraper-env #kubectl create configmap scraper-env --from-file=.env
+
+          restartPolicy: Never
+
+          volumes:
+            - name: streamtv-config
+              configMap:
+                name: scraper-config #kubectl create configmap scraper-config --from-file=.config/
+            - name: streamtv-cache
+              persistentVolumeClaim:
+                claimName: streamtv-cache

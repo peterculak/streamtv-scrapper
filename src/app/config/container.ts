@@ -36,7 +36,7 @@ const _ = require('underscore');
 const fs = require('fs');
 const glob = require("glob");
 import yaml from 'js-yaml';
-import {HostInterface, SlugsConfigInterface} from "./ConfigInterface";
+import {HostInterface, SelectorsConfigInterface, SlugsConfigInterface} from "./ConfigInterface";
 import Slug from "../../Slug";
 import ConfigInterface from "./ConfigInterface";
 import Config from "./Config";
@@ -59,14 +59,16 @@ container.bind<ArchiveServiceStrategyInterface>(CONSTANTS.JOJ_ARCHIVE_STRATEGY).
 container.bind<TVArchiveCompilerInterface>(CONSTANTS.JOJ_ARCHIVE_COMPILER).to(TVArchiveCompiler);
 container.bind<Slug>(CONSTANTS.SLUGS).to(Slug);
 
-const configYml = process.env.STREAM_TV_APP_CONFIG as string;
-const configYmlContent = yaml.safeLoad(fs.readFileSync(configYml));
-const config = Config.fromYml(configYmlContent);
+const getConfig = (configYml: string|undefined) =>
+    configYml ? Config.fromYml(yaml.safeLoad(fs.readFileSync(configYml))) : new Config();
+const config: ConfigInterface = getConfig(process.env.STREAM_TV_APP_CONFIG);
+
 container.bind<ConfigInterface>(CONSTANTS.CONFIG).toConstantValue(config);
 container.bind<ValidatorInterface>(CONSTANTS.HOST_VALIDATOR).toConstantValue(
-    new HostValidator((config.hosts || []).map((conf: HostInterface) => conf.name))
+    new HostValidator((config.hosts).map((conf: HostInterface) => conf.name))
 );
 container.bind<SlugsConfigInterface>(CONSTANTS.SLUGS_CONFIG).toConstantValue(config.slugs);
+container.bind<SelectorsConfigInterface>(CONSTANTS.SELECTORS_CONFIG).toConstantValue(config.selectors);
 
 const filesystem = new FileSystem(fs, glob, container.get<LoggerInterface>(CONSTANTS.LOGGER));
 container.bind<FileSystemInterface>(CONSTANTS.FILESYSTEM).toConstantValue(filesystem);

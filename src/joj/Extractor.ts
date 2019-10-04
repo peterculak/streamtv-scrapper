@@ -6,26 +6,61 @@ import {ArchiveIndexInterface} from "./ArchiveIndexInterface";
 import Slug from "../Slug";
 import EpisodeInterface from "./EpisodeInterface";
 import EpisodePageInterface from "./EpisodePageInterface";
+import {SelectorsConfigInterface} from "../app/config/ConfigInterface";
 
 @injectable()
 class Extractor implements ExtractorServiceInterface {
+    private readonly archiveItemSelector: string = this.selectors.archiveItem || 'div.b-i-archive-list > div.row';
+    private readonly archiveItemUrlSelector: string = this.selectors.archiveItemUrl || '.w-title > a';
+    private readonly archiveItemTitleSelector: string = this.selectors.archiveItemTitle || '.w-title';
+    private readonly archiveItemImageSelector: string = this.selectors.archiveItemImage || '.w-title img';
+    private readonly seriesArchiveUrlSelector: string = this.selectors.seriesArchiveUrl || '.e-subnav-wrap a[title*="Archív"]';
+    private readonly seriesPagesMetaWrapperSelector: string = this.selectors.seriesPagesMetaWrapper || '.e-subnav-wrap';
+    private readonly seriesPagesMetaItemSelector: string = this.selectors.seriesPagesMetaItem || 'div.e-select > select > option';
+    private readonly newsSeriesPagesMetaWrapperSelector: string = this.selectors.newsSeriesPagesMetaWrapper || 'nav.e-tab-nav';
+    private readonly newsSeriesPagesMetaItemSelector: string = this.selectors.newsSeriesPagesMetaItem || 'ul.nav > li > a';
+    private readonly episodesSectionSelector: string = this.selectors.episodesSection || '.e-mobile-article-p article';
+    private readonly episodesSectionAltSelector: string = this.selectors.episodesSectionAlt || '.b-articles-mobile-listing article';
+    private readonly episodesSectionAlt2Selector: string = this.selectors.episodesSectionAlt2 || 'article';
+    private readonly playIconSelector: string = this.selectors.playIcon || '.icons-play';
+    private readonly episodeSubtitleSectionSelector: string = this.selectors.episodeSubtitleSection || 'h4.subtitle';
+    private readonly episodeDateSelector: string = this.selectors.episodeDate || 'span.date';
+    private readonly episodeStringSelector: string = this.selectors.episodeString || 'span';
+    private readonly loadMoreEpisodesLinkSelector: string = this.selectors.loadMoreEpisodesLink || 'a[title="Načítaj viac"]';
+    private readonly loadMoreEpisodesLinkAltSelector: string = this.selectors.loadMoreEpisodesLinkAlt || '.e-load-more a';
+    private readonly moreEpisodesWrapperSelector: string = this.selectors.moreEpisodesWrapper || '.row.scroll-item';
+    private readonly moreEpisodesWrapperAltSelector: string = this.selectors.moreEpisodesWrapperAlt || '.row.js-load-item';
+    private readonly episodeIframeSelector: string = this.selectors.episodeIframe || 'section.s-video-detail iframe';
+    private readonly episodeIframeAltSelector: string = this.selectors.episodeIframeAlt || '.b-iframe-video iframe';
+    private readonly episodeIframeAlt2Selector: string = this.selectors.episodeIframeAlt2 || 'iframe';
+    private readonly episodeIframeUrlSelector: string = this.selectors.episodeIframeUrl || 'media.joj.sk';
+    private readonly episodeOrgMetaWrapperSelector: string = this.selectors.episodeOrgMetaWrapper || 'script[type="application/ld+json"]';
+    private readonly episodeOgMetaDateAddedSelector: string = this.selectors.episodeOgMetaDateAdded || '.article-head span.info';
+    private readonly metaPublishDateSelector: string = this.selectors.metaPublishDate || "meta[property='publish-date']";
+    private readonly episodeOgMetaTypeSelector: string = this.selectors.episodeOgMetaType || "meta[property='og:type']";
+    private readonly episodeOgMetaTitleSelector: string = this.selectors.episodeOgMetaTitle || "meta[property='og:title']";
+    private readonly episodeOgMetaDescriptionSelector: string = this.selectors.episodeOgMetaDescription || "meta[property='og:description']";
+    private readonly episodeOgMetaUrlSelector: string = this.selectors.episodeOgMetaUrl || "meta[property='og:url']";
+    private readonly episodeOgMetaImageSelector: string = this.selectors.episodeOgMetaImage || "meta[property='og:image']";
+    private readonly episodeMp4Regex: RegExp = this.selectors.episodeMp4Regex || /var src\s=\s{.*?(mp4).*?}/gs;
+
     constructor(
         @inject(CONSTANTS.SLUGS) private slug: Slug,
-        @inject(CONSTANTS.CHEERIO) private dom: CheerioAPI
+        @inject(CONSTANTS.CHEERIO) private dom: CheerioAPI,
+        @inject(CONSTANTS.SELECTORS_CONFIG) private selectors: SelectorsConfigInterface,
     ) {}
 
     public extractArchive(content: string): ArchiveIndexInterface {
         const $ = this.dom.load(content);
         const archive: ArchiveIndexInterface = [];
-        const slug = this.slug;
 
-        $('div.b-i-archive-list > div.row').each(function (i: number, elem: any) {
-            const url = $('.w-title > a', elem).attr('href');
+        $(this.archiveItemSelector).each((i: number, elem: any) => {
+            const url = String($(this.archiveItemUrlSelector, elem).attr('href'));
             archive.push({
-                title: $('.w-title', elem).text().trim(),
-                img: $('.w-title img', elem).attr('data-original'),
+                title: $(this.archiveItemTitleSelector, elem).text().trim(),
+                img: String($(this.archiveItemImageSelector, elem).attr('data-original')),
                 url: url,
-                slug: slug.fromProgramUrl(url),
+                slug: this.slug.fromProgramUrl(url),
             });
         });
 
@@ -34,18 +69,18 @@ class Extractor implements ExtractorServiceInterface {
 
     public seriesArchiveUrl(content: string): string {
         const $ = this.dom.load(content);
-        const a = $('.e-subnav-wrap a[title*="Archív"]');
-        return a.length ? a.attr('href'): '';
+        const a = $(this.seriesArchiveUrlSelector);
+        return a.length ? String(a.attr('href')): '';
     }
 
     public seriesPagesMetaData(content: string): Array<{ id: string, title: string }> {
         const $ = this.dom.load(content);
-        let row = $('.e-subnav-wrap').html();
+        let row = $(this.seriesPagesMetaWrapperSelector).html();
         if (row === null || row === undefined) {
             row = '';
         }
         const meta: Array<{ id: string, title: string }> = [];
-        $('div.e-select > select > option', row).each((i: number, elem: any) => {
+        $(this.seriesPagesMetaItemSelector, row).each((i: number, elem: any) => {
             meta.push({id: $(elem).val(), title: $(elem).text().trim()});
         });
 
@@ -54,13 +89,13 @@ class Extractor implements ExtractorServiceInterface {
 
     public newsSeriesPagesMetaData(content: string): Array<{ url: string, title: string }> {
         const $ = this.dom.load(content);
-        let row = $('nav.e-tab-nav').html();
+        let row = $(this.newsSeriesPagesMetaWrapperSelector).html();
         if (row === null || row === undefined) {
             row = '';
         }
         const meta: Array<{ url: string, title: string }> = [];
-        $('ul.nav > li > a', row).each((i: number, elem: any) => {
-            meta.push({url: $(elem).attr('href'), title: $(elem).text().trim()});
+        $(this.newsSeriesPagesMetaItemSelector, row).each((i: number, elem: any) => {
+            meta.push({url: String($(elem).attr('href')), title: $(elem).text().trim()});
         });
 
         return meta;
@@ -70,42 +105,42 @@ class Extractor implements ExtractorServiceInterface {
         const $ = this.dom.load(content);
         const episodes: Array<EpisodePageInterface> = [];
 
-        let episodesSection = $('.e-mobile-article-p article');
+        let episodesSection = $(this.episodesSectionSelector);
 
         if (!episodesSection.length) {
-            episodesSection = $('.b-articles-mobile-listing article');
+            episodesSection = $(this.episodesSectionAltSelector);
         }
         if (!episodesSection.length) {
-            episodesSection = $('article');
+            episodesSection = $(this.episodesSectionAlt2Selector);
             //this can only be running when fetching news not for tv series
             episodesSection = episodesSection.filter((index: number, element: any) => {
-                return $('.icons-play', element).length > 0;
+                return $(this.playIconSelector, element).length > 0;
             });
         }
 
         episodesSection.each((i: number, elem: any) => {
             const a = $('a', elem);
-            const subtitle = $('h4.subtitle', elem);
+            const subtitle = $(this.episodeSubtitleSectionSelector, elem);
 
-            let date = $('span.date', subtitle).first().html();
+            let date = $(this.episodeDateSelector, subtitle).first().html();
             if (date === undefined || date === null) {
                 date = '';
             }
-            let episodeString = $('span.date', subtitle).last().html();
+            let episodeString = $(this.episodeDateSelector, subtitle).last().html();
             let episode = 0;
             if (episodeString) {
                 episode = parseInt(episodeString.split(':')[1]);
             }
 
             if (!episode) {
-                episodeString = $('span', subtitle).first().html();
+                episodeString = $(this.episodeStringSelector, subtitle).first().html();
                 if (episodeString) {
                     episode = parseInt(episodeString.split(':')[1]);
                 }
             }
 
             if (!episode) {
-                episodeString = $('span', subtitle).last().html();
+                episodeString = $(this.episodeStringSelector, subtitle).last().html();
                 if (episodeString) {
                     episode = parseInt(episodeString.split(':')[1]);
                 }
@@ -113,7 +148,7 @@ class Extractor implements ExtractorServiceInterface {
 
             const title = a.attr('title');
             const url = a.attr('href');
-            const image = $('img', a).attr('data-original');
+            const image = String($('img', a).attr('data-original'));
 
             if (title && url) {
                 episodes.push({
@@ -131,16 +166,16 @@ class Extractor implements ExtractorServiceInterface {
 
     public loadMoreEpisodesLink(content: string): string {
         const $ = this.dom.load(content);
-        let a = $('a[title="Načítaj viac"]').last();
+        let a = $(this.loadMoreEpisodesLinkSelector).last();
 
         if (!a.length) {
-            a = $('.e-load-more a');
+            a = $(this.loadMoreEpisodesLinkAltSelector);
         }
         if (a.length) {
             if (a.attr('href') !== '#') {
-                return a.attr('href');
+                return String(a.attr('href'));
             } else {
-                return a.attr('data-href');
+                return String(a.attr('data-href'));
             }
         }
 
@@ -149,9 +184,9 @@ class Extractor implements ExtractorServiceInterface {
 
     public moreEpisodes(content: string): string {
         const $ = this.dom.load(content);
-        let html = $('.row.scroll-item').html();
+        let html = $(this.moreEpisodesWrapperSelector).html();
         if (!html) {
-            html = $('.row.js-load-item').html();
+            html = $(this.moreEpisodesWrapperAltSelector).html();
         }
         if (html === null || html === undefined) {
             return '';
@@ -163,9 +198,9 @@ class Extractor implements ExtractorServiceInterface {
     public appendEpisodes(content: string, moreContent: string): string {
         const $ = this.dom.load(content);
         //todo last is a hack to find correct Load More link
-        let a = $('a[title="Načítaj viac"]').last();
+        let a = $(this.loadMoreEpisodesLinkSelector).last();
         if (!a.length) {
-            a = $('.e-load-more a');
+            a = $(this.loadMoreEpisodesLinkAltSelector);
         }
         a.parent().replaceWith(moreContent);
 
@@ -174,19 +209,20 @@ class Extractor implements ExtractorServiceInterface {
 
     public episodeIframeUrl(content: string): string {
         const $ = this.dom.load(content);
-        let iframes = $('section.s-video-detail iframe');
+        let iframes = $(this.episodeIframeSelector);
         if (!iframes.length) {
-            iframes = $('.b-iframe-video iframe');
+            iframes = $(this.episodeIframeAltSelector);
         }
         if (!iframes.length) {
-            iframes = $('iframe');
+            iframes = $(this.episodeIframeAlt2Selector);
         }
         let url = '';
         if (iframes) {
             iframes.each((i: number, item: any) => {
                 const el = $(item);
-                if (el.attr('src').indexOf('media.joj.sk') !== -1) {
-                    url = el.attr('src');
+                const src = String(el.attr('src'));
+                if (src.indexOf(this.episodeIframeUrlSelector) !== -1) {
+                    url = src;
                 }
             })
         }
@@ -196,7 +232,7 @@ class Extractor implements ExtractorServiceInterface {
 
     public episodeSchemaOrgMeta(content: string): EpisodeInterface {
         const $ = this.dom.load(content, {xmlMode: false});
-        let string = $('script[type="application/ld+json"]').html();
+        let string = $(this.episodeOrgMetaWrapperSelector).html();
         if (string === null || string === undefined) {
             string = '';
         }
@@ -206,21 +242,21 @@ class Extractor implements ExtractorServiceInterface {
     episodeOgMeta(content: string): EpisodeInterface {
         const $ = this.dom.load(content);
 
-        const dateAdded = $('.article-head span.info').data('date') ?
-            $('.article-head span.info').data('date') : $("meta[property='publish-date']").attr("content");
-        const episode = {
-            '@type': $("meta[property='og:type']").attr("content"),
-            name: $("meta[property='og:title']").attr("content"),
-            description: $("meta[property='og:description']").attr("content"),
-            url: $("meta[property='og:url']").attr("content"),
+        const dateAdded = $(this.episodeOgMetaDateAddedSelector).data('date') ?
+            $(this.episodeOgMetaDateAddedSelector).data('date') : $(this.metaPublishDateSelector).attr("content");
+
+        return {
+            '@type': $(this.episodeOgMetaTypeSelector).attr("content"),
+            name: String($(this.episodeOgMetaTitleSelector).attr("content")),
+            description: $(this.episodeOgMetaDescriptionSelector).attr("content"),
+            url: $(this.episodeOgMetaUrlSelector).attr("content"),
             dateAdded: dateAdded,
-            image: $("meta[property='og:image']").attr("content"),
-            episodeNumber: 1,
-            partOfSeason: { seasonNumber: 1, name: '' },
+            image: $(this.episodeOgMetaImageSelector).attr("content"),
+            episodeNumber: 1,//todo why is this 1
+            partOfSeason: { seasonNumber: 1, name: '' },//todo why is this 1
             partOfTVSeries: {},
             mp4: [],
         };
-        return episode;
     }
 
     public extractDateAdded(content: string): string {
@@ -238,7 +274,7 @@ class Extractor implements ExtractorServiceInterface {
         const filtered = scripts.filter((i: number, e: any) => {
             const html = $(e).html();
             if (html && html.length) {
-                const m  = html && html.match(/var src\s=\s{.*?(mp4).*?}/gs);
+                const m  = html && html.match(this.episodeMp4Regex);
                 const ret = m && m.length > 0;
                 return Boolean(ret).valueOf();
             }
@@ -247,7 +283,7 @@ class Extractor implements ExtractorServiceInterface {
         });
 
         const html = $(filtered[0]).html();
-        const m  = html && html.match(/var src\s=\s{.*?(mp4).*?}/gs);
+        const m  = html && html.match(this.episodeMp4Regex);
         if (!m) {
             return [];
         }

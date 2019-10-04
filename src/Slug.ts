@@ -1,7 +1,7 @@
 import {inject, injectable} from "inversify";
 import "reflect-metadata";
-import SlugsConfigInterface, {ExcludedSlugs, MappedSlugs} from "./SlugsConfigInterface";
 import CONSTANTS from "./app/config/constants";
+import {ExcludedSlugs, MappedSlugs, SlugsConfigInterface} from "./app/config/ConfigInterface";
 
 @injectable()
 class Slug {

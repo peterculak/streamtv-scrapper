@@ -1,27 +1,38 @@
-import {HostInterface, NewsItem, Show, SlugsConfigInterface, ConfigInterface} from "./ConfigInterface";
+import {
+    HostInterface,
+    NewsItem,
+    Show,
+    SlugsConfigInterface,
+    ConfigInterface,
+    SelectorsConfigInterface
+} from "./ConfigInterface";
+import SelectorsConfig from "./SelectorsConfig";
+import SlugsConfig from "./SlugsConfig";
 
 class Config implements ConfigInterface {
-    private constructor(
-        private readonly _cacheDir: string,
-        private readonly _hosts: Array<HostInterface>,
+    constructor(
+        private readonly _cacheDir: string = './var/cache',
+        private readonly _hosts: Array<HostInterface> = [],
         private readonly _news?: Array<NewsItem>,
         private readonly _shows?: Array<Show>,
-        private readonly _slugs?: SlugsConfigInterface
+        private readonly _slugs?: SlugsConfigInterface,
+        private readonly _selectors?: SelectorsConfigInterface,
     ) {}
 
     //todo validate?
-    static fromYml(ymlDefinition: ConfigInterface): Config {
+    static fromYml(yml: ConfigInterface): Config {
         return new this(
-            ymlDefinition.cacheDir,
-            ymlDefinition.hosts,
-            ymlDefinition.news,
-            ymlDefinition.shows,
-            ymlDefinition.slugs,
+            yml.cacheDir,
+            yml.hosts,
+            yml.news,
+            yml.shows,
+            yml.slugs ? SlugsConfig.fromYml(yml.slugs) : new SlugsConfig(),
+            yml.selectors ? SelectorsConfig.fromYml(yml.selectors) : new SelectorsConfig(),
         );
     }
 
     get cacheDir(): string {
-        return this._cacheDir || './var/cache';
+        return this._cacheDir;
     }
 
     get hosts(): Array<HostInterface> {
@@ -37,7 +48,11 @@ class Config implements ConfigInterface {
     }
 
     get slugs(): SlugsConfigInterface {
-        return this._slugs || {mapped: [], excluded: []};
+        return this._slugs || new SlugsConfig();
+    }
+
+    get selectors(): SelectorsConfigInterface {
+        return this._selectors || new SelectorsConfig();
     }
 }
 
