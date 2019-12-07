@@ -55,10 +55,10 @@ class Extractor implements ExtractorServiceInterface {
         const archive: ArchiveIndexInterface = [];
 
         $(this.archiveItemSelector).each((i: number, elem: any) => {
-            const url = $(this.archiveItemUrlSelector, elem).attr('href');
+            const url = String($(this.archiveItemUrlSelector, elem).attr('href'));
             archive.push({
                 title: $(this.archiveItemTitleSelector, elem).text().trim(),
-                img: $(this.archiveItemImageSelector, elem).attr('data-original'),
+                img: String($(this.archiveItemImageSelector, elem).attr('data-original')),
                 url: url,
                 slug: this.slug.fromProgramUrl(url),
             });
@@ -70,7 +70,7 @@ class Extractor implements ExtractorServiceInterface {
     public seriesArchiveUrl(content: string): string {
         const $ = this.dom.load(content);
         const a = $(this.seriesArchiveUrlSelector);
-        return a.length ? a.attr('href'): '';
+        return a.length ? String(a.attr('href')): '';
     }
 
     public seriesPagesMetaData(content: string): Array<{ id: string, title: string }> {
@@ -95,7 +95,7 @@ class Extractor implements ExtractorServiceInterface {
         }
         const meta: Array<{ url: string, title: string }> = [];
         $(this.newsSeriesPagesMetaItemSelector, row).each((i: number, elem: any) => {
-            meta.push({url: $(elem).attr('href'), title: $(elem).text().trim()});
+            meta.push({url: String($(elem).attr('href')), title: $(elem).text().trim()});
         });
 
         return meta;
@@ -148,7 +148,7 @@ class Extractor implements ExtractorServiceInterface {
 
             const title = a.attr('title');
             const url = a.attr('href');
-            const image = $('img', a).attr('data-original');
+            const image = String($('img', a).attr('data-original'));
 
             if (title && url) {
                 episodes.push({
@@ -173,9 +173,9 @@ class Extractor implements ExtractorServiceInterface {
         }
         if (a.length) {
             if (a.attr('href') !== '#') {
-                return a.attr('href');
+                return String(a.attr('href'));
             } else {
-                return a.attr('data-href');
+                return String(a.attr('data-href'));
             }
         }
 
