@@ -220,7 +220,7 @@ class Extractor implements ExtractorServiceInterface {
         if (iframes) {
             iframes.each((i: number, item: any) => {
                 const el = $(item);
-                if (el.attr('src').indexOf(this.episodeIframeUrlSelector) !== -1) {
+                if (el && el.attr('src').indexOf(this.episodeIframeUrlSelector) !== -1) {
                     url = el.attr('src');
                 }
             })
@@ -246,7 +246,7 @@ class Extractor implements ExtractorServiceInterface {
 
         return {
             '@type': $(this.episodeOgMetaTypeSelector).attr("content"),
-            name: $(this.episodeOgMetaTitleSelector).attr("content"),
+            name: String($(this.episodeOgMetaTitleSelector).attr("content")),
             description: $(this.episodeOgMetaDescriptionSelector).attr("content"),
             url: $(this.episodeOgMetaUrlSelector).attr("content"),
             dateAdded: dateAdded,
