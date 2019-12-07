@@ -222,7 +222,7 @@ class Extractor implements ExtractorServiceInterface {
                 const el = $(item);
                 const src = String(el.attr('src'));
                 if (src.indexOf(this.episodeIframeUrlSelector) !== -1) {
-                    url = el.attr('src');
+                    url = src;
                 }
             })
         }
