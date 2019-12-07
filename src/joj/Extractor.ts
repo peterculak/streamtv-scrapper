@@ -220,10 +220,9 @@ class Extractor implements ExtractorServiceInterface {
         if (iframes) {
             iframes.each((i: number, item: any) => {
                 const el = $(item);
-                if (el !== undefined) {
-                    if (el.attr('src').indexOf(this.episodeIframeUrlSelector) !== -1) {
-                        url = el.attr('src');
-                    }
+                const src = String(el.attr('src'));
+                if (src.indexOf(this.episodeIframeUrlSelector) !== -1) {
+                    url = el.attr('src');
                 }
             })
         }
