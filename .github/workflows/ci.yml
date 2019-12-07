@@ -1,0 +1,15 @@
+name: CI
+
+on: [push]
+
+jobs:
+  test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/typescript-action@v1
+    - run: npm install
+    - run: npm build
+    - run: npm test
