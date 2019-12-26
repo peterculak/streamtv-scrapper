@@ -1,0 +1,31 @@
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: hello
+spec:
+  schedule: "*/10 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: streamtv-scraper
+              image: fr0z3nk0:streamtv-scraper
+              volumeMounts:
+                - name: streamtv-cache
+                  mountPath: /opt/streamtv/var/cache/
+                - name: streamtv-config
+                  mountpath: /opt/streamtv/.config/
+              args:
+                - npm run news; npm run encrypt
+
+          restartPolicy: Never
+
+          volumes:
+            - name: streamtv-config
+              configMap:
+                name: scraper-config
+            - name: streamtv-cache
+              persistentVolumeClaim:
+                claimName: streamtv-channels
