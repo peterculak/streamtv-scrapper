@@ -1,0 +1,37 @@
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: joj-pocasie
+  namespace: streamtv
+spec:
+  schedule: "0 21 * * *"
+  successfulJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: streamtv-scraper
+              image: fr0z3nk0/streamtv-scraper:latest
+              volumeMounts:
+                - name: streamtv-cache
+                  mountPath: /opt/streamtv/var/cache/
+                - name: streamtv-config
+                  mountPath: /opt/streamtv/.config/
+              args:
+                - /bin/sh
+                - -c
+                - node lib/src/index.js -fcvp https://www.joj.sk/najlepsie-pocasie -h www.joj.sk | ./node_modules/pino-pretty/bin.js -t "yyyy-mm-dd HH:MM:ss" -c -i "pid,hostname"; npm run encrypt
+              envFrom:
+                - configMapRef:
+                    name: scraper-env
+          restartPolicy: Never
+
+          volumes:
+            - name: streamtv-config
+              configMap:
+                name: scraper-config
+            - name: streamtv-cache
+              persistentVolumeClaim:
+                claimName: streamtv-cache

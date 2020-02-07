@@ -6,7 +6,8 @@ import ClientInterface from "../../src/ClientInterface";
 import FileSystemInterface from "../../src/FileSystemInterface";
 import ExtractorServiceInterface from "../../src/joj/ExtractorServiceInterface";
 import EpisodeFactoryInterface from "../../src/joj/EpisodeFactoryInterface";
-import EpisodeInterface from "../../src/joj/EpisodeInterface";
+import EpisodeInterface from "../../src/joj/entity/EpisodeInterface";
+import {Episode} from "../../src/joj/entity/Episode";
 
 const mockLogger = () => {
 };
@@ -95,11 +96,33 @@ describe('JOJ Episode Factory', () => {
             return new Promise((resolve) => resolve(mockCachedMetaFile));
         });
         mockExtractor.episodeMp4Urls.mockImplementationOnce(() => ['http://www.foo.sk/bar.mp4']);
-        const expected = {
-            partOfSeason: { seasonNumber: 1 },
+        const meta = {
+            '@type': 'TVEpisode',
+            name: 'Silvester',
+            dateAdded: new Date(),
+            description: 'description',
+            thumbnailUrl: 'https://img.joj.sk/r400x300n/1f9796b089008b4dc10903f072207683.jpg',
+            partOfSeason: { seasonNumber: 1, name: '1. séria' },
+            partOfTVSeries: { name: 'Profesionali' },
+            timeRequired: 'PT3333S',
+            episodeNumber: 1,
+            url: 'https://videoportal.joj.sk/profesionali/epizoda/2732-silvester',
             mp4: ['http://www.foo.sk/bar.mp4'],
         };
-        mockExtractor.episodeSchemaOrgMeta.mockImplementationOnce(() => expected);
+        const expected = new Episode(
+            meta["@type"],
+            meta.dateAdded,
+            meta.description,
+            meta.episodeNumber,
+            meta.thumbnailUrl,
+            meta.mp4,
+            meta.name,
+            meta.partOfSeason,
+            meta.partOfTVSeries,
+            meta.timeRequired,
+            meta.url
+        );
+        mockExtractor.episodeSchemaOrgMeta.mockImplementationOnce(() => meta);
 
         episodeFactory.fromCache('/profesionali/series/1. seria/1.html').then((actual: EpisodeInterface) => {
             expect(actual).toEqual(expected);

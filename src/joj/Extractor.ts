@@ -4,7 +4,7 @@ import ExtractorServiceInterface from "./ExtractorServiceInterface";
 import CONSTANTS from "../app/config/constants";
 import {ArchiveIndexInterface} from "./ArchiveIndexInterface";
 import Slug from "../Slug";
-import EpisodeInterface from "./EpisodeInterface";
+import EpisodeInterface from "./entity/EpisodeInterface";
 import EpisodePageInterface from "./EpisodePageInterface";
 import {SelectorsConfigInterface} from "../app/config/ConfigInterface";
 
@@ -230,7 +230,7 @@ class Extractor implements ExtractorServiceInterface {
         return url;
     }
 
-    public episodeSchemaOrgMeta(content: string): EpisodeInterface {
+    public episodeSchemaOrgMeta(content: string): {} {
         const $ = this.dom.load(content, {xmlMode: false});
         let string = $(this.episodeOrgMetaWrapperSelector).html();
         if (string === null || string === undefined) {
@@ -239,14 +239,14 @@ class Extractor implements ExtractorServiceInterface {
         return JSON.parse(string);
     }
 
-    episodeOgMeta(content: string): EpisodeInterface {
+    episodeOgMeta(content: string): {} {
         const $ = this.dom.load(content);
 
         const dateAdded = $(this.episodeOgMetaDateAddedSelector).data('date') ?
             $(this.episodeOgMetaDateAddedSelector).data('date') : $(this.metaPublishDateSelector).attr("content");
 
         return {
-            '@type': $(this.episodeOgMetaTypeSelector).attr("content"),
+            type: $(this.episodeOgMetaTypeSelector).attr("content"),
             name: String($(this.episodeOgMetaTitleSelector).attr("content")),
             description: $(this.episodeOgMetaDescriptionSelector).attr("content"),
             url: $(this.episodeOgMetaUrlSelector).attr("content"),

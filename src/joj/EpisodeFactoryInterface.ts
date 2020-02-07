@@ -1,4 +1,4 @@
-import EpisodeInterface from "./EpisodeInterface";
+import EpisodeInterface from "./entity/EpisodeInterface";
 
 interface EpisodeFactoryInterface {
     fromCache(fullPath: string): Promise<EpisodeInterface>;

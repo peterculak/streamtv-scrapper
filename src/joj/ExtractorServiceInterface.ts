@@ -1,5 +1,4 @@
 import {ArchiveIndexInterface} from "./ArchiveIndexInterface";
-import EpisodeInterface from "./EpisodeInterface";
 
 interface ExtractorServiceInterface {
     extractArchive(content: string): ArchiveIndexInterface;
@@ -11,8 +10,8 @@ interface ExtractorServiceInterface {
     appendEpisodes(originalContent: string, moreContent: string): string;
     moreEpisodes(content: string): string;
     loadMoreEpisodesLink(content: string): string;
-    episodeSchemaOrgMeta(content: string): EpisodeInterface;
-    episodeOgMeta(content: string): EpisodeInterface;
+    episodeSchemaOrgMeta(content: string): {};
+    episodeOgMeta(content: string): {};
     extractDateAdded(content: string): string;
     episodeMp4Urls(content: string): Array<string>;
 }

@@ -1,12 +1,13 @@
 import {inject, injectable} from "inversify";
 import "reflect-metadata";
-import EpisodeInterface from "./EpisodeInterface";
+import EpisodeInterface from "./entity/EpisodeInterface";
 import FileInterface from "../FileInterface";
 import CONSTANTS from "../app/config/constants";
 import ExtractorServiceInterface from "./ExtractorServiceInterface";
 import LoggerInterface from "../LoggerInterface";
 import FileSystemInterface from "../FileSystemInterface";
 import EpisodeFactoryInterface from "./EpisodeFactoryInterface";
+import {Episode} from "./entity/Episode";
 
 @injectable()
 class EpisodeFactory implements EpisodeFactoryInterface {
@@ -24,26 +25,66 @@ class EpisodeFactory implements EpisodeFactoryInterface {
                     throw new Error(`Episode file ${file.fullPath} was empty`);
                 }
 
-                let meta = {} as EpisodeInterface;
+                let meta = {} as any;
                 try {
                     meta = this.extractor.episodeSchemaOrgMeta(file.content);
                 } catch (error) {
                     //cached file is not schema org
                 }
 
-                if (!Object.keys(meta).length) {
-                    meta = this.extractor.episodeOgMeta(file.content);
+                if (!meta.dateAdded) {
+                    meta.dateAdded = meta.datePublished;
+                }
+
+                if (!meta.dateAdded && meta.video) {
+                    meta.dateAdded = meta.video.uploadDate;
+                }
+
+                if (!meta.dateAdded) {
+                    meta.dateAdded = this.extractor.extractDateAdded(file.content);
+                }
+
+                if (!meta.partOfSeason) {
                     const bits = fullPath.split('/');
-                    meta.partOfSeason.name = bits[6];
-                    meta.partOfTVSeries = {name: 'Správy', "@type": "News"};
+                    meta.partOfSeason = {
+                        name: bits[6]
+                    };
+                    meta.partOfTVSeries = {name: 'Správy', type: 'News'};
                 }
 
-                const dateAdded = this.extractor.extractDateAdded(file.content);
-                if (!meta.dateAdded && dateAdded) {
-                    meta.dateAdded = dateAdded;
+                if (!meta.description && meta.video) {
+                    meta.description = meta.video.description;
                 }
 
-                return meta;
+                if (!meta.description && meta.partOfTVSeries) {
+                    meta.description = meta.partOfTVSeries.description;
+                }
+
+                if (meta.image && meta.image[0]) {
+                    meta.image = meta.image[0].url;
+                }
+
+                if (!meta.image && meta.video) {
+                    meta.image = meta.video.thumbnailUrl;
+                }
+
+                if (!meta.image) {
+                    meta.image = meta.thumbnailUrl;
+                }
+
+                return new Episode(
+                    meta['@type'],
+                    meta.dateAdded,
+                    meta.description,
+                    meta.episodeNumber,
+                    meta.image,
+                    [], //at this point it's not available, it's decorated in next step
+                    meta.name ? meta.name : meta.headline,
+                    meta.partOfSeason,
+                    meta.partOfTVSeries,
+                    meta.video && meta.video.duration ? meta.video.duration : meta.timeRequired,
+                    meta.url
+                );
             })
             .then((meta: EpisodeInterface) => {
                 const seriesPath = fullPath.substr(0, fullPath.lastIndexOf('/'));
@@ -56,13 +97,30 @@ class EpisodeFactory implements EpisodeFactoryInterface {
 
                 return this.filesystem.readFile(`${seriesPath}/iframes/${episodeFileName}`)
                     .then((iframeFile: FileInterface) => {
-                        meta.mp4 = this.extractor.episodeMp4Urls(iframeFile.content);
 
-                        if (!meta.mp4.length) {//possibly other format
+                        const mp4 = this.extractor.episodeMp4Urls(iframeFile.content);
+
+                        if (!mp4.length) {//possibly other format
                             throw new Error(`Mp4 urls not found in ${iframeFileSource}`);
                         }
-                        return meta;
+
+                        return new Episode(
+                            meta.type,
+                            meta.dateAdded,
+                            meta.description,
+                            meta.episodeNumber,
+                            meta.image,
+                            mp4,
+                            meta.name,
+                            meta.partOfSeason,
+                            meta.partOfTVSeries,
+                            meta.timeRequired,
+                            meta.url
+                        );
                     });
+            })
+            .catch((error) => {
+                throw (`${error} in ${fullPath}`);
             })
     }
 }

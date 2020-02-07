@@ -1,4 +1,4 @@
-import EpisodeInterface from "./EpisodeInterface";
+import EpisodeInterface from "./entity/EpisodeInterface";
 import {ArchiveIndexInterface} from "./ArchiveIndexInterface";
 import Host from "../Host";
 

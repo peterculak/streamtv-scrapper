@@ -10,8 +10,9 @@ import ExtractorServiceInterface from "../../src/joj/ExtractorServiceInterface";
 import {ArchiveIndexInterface} from "../../src/joj/ArchiveIndexInterface";
 import LoggerInterface from "../../src/LoggerInterface";
 import EpisodeFactoryInterface from "../../src/joj/EpisodeFactoryInterface";
-import EpisodeInterface from "../../src/joj/EpisodeInterface";
+import EpisodeInterface from "../../src/joj/entity/EpisodeInterface";
 import Host from "../../src/Host";
+import {Episode} from "../../src/joj/entity/Episode";
 
 const mockLogger = () => {
 };
@@ -121,13 +122,20 @@ describe('Archive Service', () => {
             mockFilesystem.sync.mockImplementation(() => ['1. seria/1.html']);
 
             mockEpisodeFactory.fromCache.mockImplementation(() => {
-                const episode: EpisodeInterface = {
-                    name: 'name',
-                    episodeNumber: 1,
-                    partOfTVSeries: {},
-                    mp4: ['http://foo.bar/video.mp4'],
-                    partOfSeason: {seasonNumber: 1, name: 'season name'}
-                };
+                const episode: EpisodeInterface = new Episode(
+                    'type',
+                    new Date(),
+                    'description',
+                    1,
+                    'image',
+                    ['http://foo.bar/video.mp4'],
+                    'name',
+                    {seasonNumber: 1, name: 'season name'},
+                    {name: 'series name'},
+                    '1',
+                    'url',
+                );
+
                 return new Promise((resolve => resolve(episode)));
             });
             const expectedArchive = JSON.stringify([{1: {seasonNumber: 1, episodes: [{episodeNumber: 1, mp4: ['http://foo.bar/video.mp4']}]}}]);
@@ -154,13 +162,19 @@ describe('Archive Service', () => {
             ;
 
             mockEpisodeFactory.fromCache.mockImplementation(() => {
-                const episode: EpisodeInterface = {
-                    name: 'name',
-                    episodeNumber: 1,
-                    partOfTVSeries: {},
-                    mp4: ['http://foo.bar/video.mp4'],
-                    partOfSeason: {seasonNumber: 1, name: 'season name'}
-                };
+                const episode: EpisodeInterface = new Episode(
+                    'type',
+                    new Date(),
+                    'description',
+                    1,
+                    'image',
+                    ['http://foo.bar/video.mp4'],
+                    'name',
+                    {seasonNumber: 1, name: 'season name'},
+                    {name: 'series name'},
+                    '1',
+                    'url',
+                );
                 return new Promise((resolve => resolve(episode)));
             });
 
@@ -193,13 +207,19 @@ describe('Archive Service', () => {
             ;
 
             mockEpisodeFactory.fromCache.mockImplementation(() => {
-                const episode: EpisodeInterface = {
-                    name: 'name',
-                    episodeNumber: 1,
-                    partOfTVSeries: {},
-                    mp4: ['http://foo.bar/video.mp4'],
-                    partOfSeason: {seasonNumber: 2, name: 'season name'}
-                };
+                const episode: EpisodeInterface = new Episode(
+                    'type',
+                    new Date(),
+                    'description',
+                    1,
+                    'image',
+                    ['http://foo.bar/video.mp4'],
+                    'name',
+                    {seasonNumber: 1, name: 'season name'},
+                    {name: 'series name'},
+                    '1',
+                    'url',
+                );
                 return new Promise((resolve => resolve(episode)));
             });
 

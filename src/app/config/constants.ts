@@ -1,10 +1,8 @@
 const CONSTANTS = {
     JOJ_ARCHIVE: Symbol.for("JojArchive"),
-    JOJ_NEWS_ARCHIVE: Symbol.for("JojNewsArchive"),
     JOJ_SERIES: Symbol.for("JojSeries"),
     JOJ_NEWS_SERIES: Symbol.for("JojNewsSeries"),
     JOJ_SERIES_STRATEGY: Symbol.for("JojSeriesStrategy"),
-    JOJ_ARCHIVE_STRATEGY: Symbol.for("JojArchiveStrategy"),
     JOJ_EPISODES: Symbol.for("JojEpisodes"),
     JOJ_EXTRACTOR: Symbol.for("JojExtractor"),
     JOJ_EPISODE_FACTORY: Symbol.for("JojEpisodeFactory"),

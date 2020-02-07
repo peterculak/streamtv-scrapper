@@ -10,7 +10,7 @@ import LoggerInterface from "../LoggerInterface";
 import ClientInterface from "../ClientInterface";
 import Slug from "../Slug";
 import {ArchiveIndexInterface, ArchiveIndexItem} from "./ArchiveIndexInterface";
-import EpisodeInterface from "./EpisodeInterface";
+import EpisodeInterface from "./entity/EpisodeInterface";
 import FileInterface from "../FileInterface";
 import EpisodeFactoryInterface from "./EpisodeFactoryInterface";
 import * as crypto from "crypto-js";
@@ -136,39 +136,38 @@ class ArchiveService implements ArchiveServiceInterface {
         }).then((r: { host: Host, filename: string }) => this.updateChannelsIndex(r.host, r.filename, password));
     }
 
+    //todo return type is wrong here !
     protected groupEpisodes(archive: Array<EpisodeInterface>): Array<EpisodeInterface> {
-        let tvseriesMeta: any = archive[0].partOfTVSeries;
+
+        let tvseriesMeta: any = {};
         const seasonMeta: any = {};
-        const seasons: Array<number> = [];
+        const seasons: Array<string> = [];
 
         //populate seasons details
-        this._.each(archive, (item: any) => {
-            const currentSeason = Object.assign({}, item.partOfSeason);
+        this._.each(archive, (item: EpisodeInterface) => {
+            const currentSeason = Object.assign({});
 
-            let seasonNumber = 1;
-            if (item.partOfSeason.seasonNumber) {
-                seasonNumber = parseInt(item.partOfSeason.seasonNumber);
+            let seasonTitle = 'Unknown';
+            if (item.seasonName) {
+                seasonTitle = item.seasonName;
+                currentSeason.name = seasonTitle;
             }
 
-            if (!this._.contains(seasons, seasonNumber)) {
-                seasonMeta[seasonNumber] = currentSeason;
-                seasons.push(seasonNumber);
+            if (!this._.contains(seasons, seasonTitle)) {
+                seasonMeta[seasonTitle] = currentSeason;
+                seasons.push(seasonTitle);
             }
         });
 
-        const episodesBySeason = this._.groupBy(archive, (item: { partOfSeason: { seasonNumber: number } }) => item.partOfSeason.seasonNumber ? item.partOfSeason.seasonNumber : 1);
+        const episodesBySeason = this._.groupBy(archive, (item: EpisodeInterface) => item.seasonName ? item.seasonName : 'Unknown');
 
         //this is to remove repeated data and sort by episode number
-        seasons.forEach((seasonNumber: number) => {
-            this._.each(episodesBySeason[seasonNumber], (item: any) => {
-                delete item.partOfTVSeries;
-                delete item.partOfSeason;
-                return item;
-            });
-            const unique = this._.uniq(episodesBySeason[seasonNumber], (episode: EpisodeInterface) => episode.episodeNumber);
-            seasonMeta[seasonNumber].episodes = this._.sortBy(unique, (episode: EpisodeInterface) => -episode.episodeNumber);
+        seasons.forEach((seasonTitle: string) => {
+            const unique = this._.uniq(episodesBySeason[seasonTitle], (episode: EpisodeInterface) => episode.episodeNumber);
+            seasonMeta[seasonTitle].episodes = this._.sortBy(unique, (episode: EpisodeInterface) => -episode.episodeNumber);
         });
 
+        tvseriesMeta.name = archive[0].seriesName;
         tvseriesMeta.seasons = this._.toArray(seasonMeta);
 
         return tvseriesMeta;
@@ -222,9 +221,9 @@ class ArchiveService implements ArchiveServiceInterface {
         if (files === null || files === undefined || files.length === 0) {
             return new Promise((resolve) => resolve([]));
         }
-        return Promise.all(files.map((file: string) => this.episodeMetaData(`${seriesDir}/${file}`)))
+        return Promise.all(files.map((file: string) => this.episodeMetaData(`${seriesDir}/${file}`).catch(e => undefined)))
+            .then((archive: Array<any>) => archive.filter((item: EpisodeInterface) => item !== undefined && item.mp4.length > 0))
             .then((archive: Array<EpisodeInterface>) => this.ensureUniqueEpisodeNumbers(archive))
-            .then((archive: Array<EpisodeInterface>) => archive.filter((item: EpisodeInterface) => item !== undefined && item.mp4.length > 0))
             .then((filteredArchive: Array<EpisodeInterface>) => {
                 this.filesystem.writeFile(
                     jsonDir,
@@ -257,17 +256,7 @@ class ArchiveService implements ArchiveServiceInterface {
     private episodeMetaData(file: string): Promise<EpisodeInterface> {
         this.logger.debug(`Episode meta data file ${file}`);
 
-        return this.episodeFactory.fromCache(file).catch((e: Error) => {
-            this.logger.warn(e.toString());
-
-            return {
-                name: '',
-                episodeNumber: 0,
-                partOfTVSeries: {},
-                partOfSeason: {seasonNumber: 0, name: ''},
-                mp4: [],
-            };
-        });
+        return this.episodeFactory.fromCache(file);
     }
 
     /**
