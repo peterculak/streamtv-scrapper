@@ -2,10 +2,10 @@
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: joj-inkognito
+  name: joj-milacikovo
   namespace: streamtv
 spec:
-  schedule: "0 21 * * 1"
+  schedule: "0 12 * * 6"
   successfulJobsHistoryLimit: 3
   jobTemplate:
     spec:
@@ -22,7 +22,7 @@ spec:
               args:
                 - /bin/sh
                 - -c
-                - node lib/src/index.js -fcvp https://www.joj.sk/inkognito -h www.joj.sk | ./node_modules/pino-pretty/bin.js -t "yyyy-mm-dd HH:MM:ss" -c -i "pid,hostname"; npm run encrypt
+                - node lib/src/index.js -fcvp https://videoportal.joj.sk/milacikovo -h www.joj.sk | ./node_modules/pino-pretty/bin.js -t "yyyy-mm-dd HH:MM:ss" -c -i "pid,hostname"; npm run encrypt
               envFrom:
                 - configMapRef:
                     name: scraper-env

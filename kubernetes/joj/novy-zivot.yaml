@@ -5,7 +5,7 @@ metadata:
   name: joj-novy-zivot
   namespace: streamtv
 spec:
-  schedule: "0 22 * * 1"
+  schedule: "0 22 * * 2-4"
   successfulJobsHistoryLimit: 3
   jobTemplate:
     spec:

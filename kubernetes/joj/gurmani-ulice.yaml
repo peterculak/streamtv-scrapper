@@ -5,7 +5,7 @@ metadata:
   name: joj-gurmani-ulice
   namespace: streamtv
 spec:
-  schedule: "0 22 * * 6"
+  schedule: "0 22 * * 0"
   successfulJobsHistoryLimit: 3
   jobTemplate:
     spec:
