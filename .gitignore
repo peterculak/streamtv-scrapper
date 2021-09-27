@@ -5,6 +5,6 @@ package-lock.json
 kubernetes/cm-*.yaml
 
 .env*
-.config/
+.config/config.yml
 lib/
 var/cache/
