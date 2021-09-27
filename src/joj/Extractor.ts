@@ -4,9 +4,9 @@ import ExtractorServiceInterface from "./ExtractorServiceInterface";
 import CONSTANTS from "../app/config/constants";
 import {ArchiveIndexInterface} from "./ArchiveIndexInterface";
 import Slug from "../Slug";
-import EpisodeInterface from "./entity/EpisodeInterface";
 import EpisodePageInterface from "./EpisodePageInterface";
 import {SelectorsConfigInterface} from "../app/config/ConfigInterface";
+import CheerioAPI from "cheerio";
 
 @injectable()
 class Extractor implements ExtractorServiceInterface {

@@ -6,6 +6,9 @@ npm i
 ## test
 npm test
 
+## test in docker container
+docker-compose -f docker-compose.yml -f docker-compose-tests.yml up
+
 ## build
 npm run build
 
