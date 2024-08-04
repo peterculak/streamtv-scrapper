@@ -46,7 +46,7 @@ class Extractor implements ExtractorServiceInterface {
 
     constructor(
         @inject(CONSTANTS.SLUGS) private slug: Slug,
-        @inject(CONSTANTS.CHEERIO) private dom: CheerioAPI,
+        @inject(CONSTANTS.CHEERIO) private dom: typeof CheerioAPI,
         @inject(CONSTANTS.SELECTORS_CONFIG) private selectors: SelectorsConfigInterface,
     ) {}
 
@@ -81,7 +81,7 @@ class Extractor implements ExtractorServiceInterface {
         }
         const meta: Array<{ id: string, title: string }> = [];
         $(this.seriesPagesMetaItemSelector, row).each((i: number, elem: any) => {
-            meta.push({id: $(elem).val(), title: $(elem).text().trim()});
+            meta.push({id: String($(elem).val()), title: $(elem).text().trim()});
         });
 
         return meta;

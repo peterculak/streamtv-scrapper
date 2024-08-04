@@ -33,3 +33,12 @@ node lib/src/index.js -fvx ^a.* -h www.joj.sk
 
 ## Create encrypted archive from pulled news and shows
 npm run encrypt
+
+# Fetch some shows in DEV locally without having to build and deploy
+```
+ts-node src/index.ts -va shows
+```
+# Encrypt shows in DEV locally without having to build and deploy
+```
+ts-node src/index.ts -va encrypt
+```

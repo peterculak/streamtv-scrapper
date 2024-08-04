@@ -1,39 +1,22 @@
 hosts:
   - name: www.joj.sk
     image: https://img.joj.sk/rx/logojoj.png
-  - name: wau.joj.sk
-    image: https://img.joj.sk/rx/logowau.png
-  - name: plus.joj.sk
-    image: https://img.joj.sk/rx/78c61f2d0cdbde28c9ebe3af34299a98.png
+  # - name: wau.joj.sk
+  #   image: https://img.joj.sk/rx/logowau.png
+  # - name: plus.joj.sk
+  #   image: https://img.joj.sk/rx/78c61f2d0cdbde28c9ebe3af34299a98.png
 news:
   - name: Správy
     host: www.joj.sk
     url: https://www.joj.sk/najnovsie
     image: https://img.joj.sk/rx/logojoj.png
 shows:
-  - name: 18-rokov-s-tv-joj
-    url: https://videoportal.joj.sk/18-rokov-s-tv-joj/epizoda/76658-18-rokov-s-tv-joj
-    host: www.joj.sk
-  - name: Čierne vdovy
-    url: https://www.joj.sk/cierne-vdovy
-  - name: Delukse
-    host: www.joj.sk
-    url: https://videoportal.joj.sk/delukse/epizoda/66593-delukse
-  - name: Inkognito
-    url: https://www.joj.sk/inkognito
-  - name: Krimy
-    url: https://www.joj.sk/krimi-relacia
-  - name: Moja mama
-    url: https://www.joj.sk/moja-mama-vari-lepsie-ako-tvoja
-  - name: Najlepsie na nasom youtube
-    url: https://www.joj.sk/najlepsie-na-nasom-youtube
+  - name: bez-servitky
+    url: https://www.joj.sk/bez-servitky
   - name: Najlepsie pocasie
     url: https://www.joj.sk/najlepsie-pocasie
   - name: Na hrane
     url: https://www.joj.sk/na-hrane
-  - name: Nove byvanie
-    host: www.joj.sk
-    url: https://videoportal.joj.sk/nove-byvanie
   - name: Noviny
     url: https://www.joj.sk/noviny
   - name: Noviny o 12
@@ -44,18 +27,35 @@ shows:
     url: https://www.joj.sk/novy-zivot
   - name: Ranne noviny
     url: https://www.joj.sk/ranne-noviny
-  - name: Rozpal to sefe
-    url: https://www.joj.sk/rozpal-to-sefe
-  - name: Sedem
-    url: https://www.joj.sk/sedem
-  - name: Sport
-    url: https://www.joj.sk/sport/uvod
-  - name: Slovacko sa nesudi
-    url: https://www.joj.sk/slovacko-sa-nesudi
-  - name: Topstar
-    url: https://www.joj.sk/top-star
-  - name: Za Sklom
-    url: https://www.joj.sk/za-sklom
+  #   host: www.joj.sk
+  # - name: 18-rokov-s-tv-joj
+  #   url: https://videoportal.joj.sk/18-rokov-s-tv-joj/epizoda/76658-18-rokov-s-tv-joj
+  #   host: www.joj.sk
+  # - name: Čierne vdovy
+  #   url: https://www.joj.sk/cierne-vdovy
+  # - name: Delukse
+  #   host: www.joj.sk
+  #   url: https://videoportal.joj.sk/delukse/epizoda/66593-delukse
+  # - name: Inkognito
+  #   url: https://www.joj.sk/inkognito
+  # - name: Krimy
+  #   url: https://www.joj.sk/krimi-relacia
+  # - name: Moja mama
+  #   url: https://www.joj.sk/moja-mama-vari-lepsie-ako-tvoja
+  # - name: Najlepsie na nasom youtube
+  #   url: https://www.joj.sk/najlepsie-na-nasom-youtube
+  # - name: Rozpal to sefe
+  #   url: https://www.joj.sk/rozpal-to-sefe
+  # - name: Sedem
+  #   url: https://www.joj.sk/sedem
+  # - name: Sport
+  #   url: https://www.joj.sk/sport/uvod
+  # - name: Slovacko sa nesudi
+  #   url: https://www.joj.sk/slovacko-sa-nesudi
+  # - name: Topstar
+  #   url: https://www.joj.sk/top-star
+  # - name: Za Sklom
+  #   url: https://www.joj.sk/za-sklom
 slugs:
   mapped:
     - urlContains: bohata-zima-s-jojkou

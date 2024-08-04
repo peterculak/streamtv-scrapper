@@ -117,6 +117,9 @@ class SeriesService implements SeriesServiceInterface {
     private loadedMorePages = 0;
     private loadMoreEpisodes(seriesUrl: string, content: string): Promise<string> {
         const loadMoreEpisodesUrl = this.loadMoreEpisodesUrl(seriesUrl, content);
+        this.logger.info(`Max load more pages ${this.maxLoadMorePages}`)
+        this.logger.info(`Loading more episodes from url ${loadMoreEpisodesUrl}`)
+        this.logger.info(`Loaded ${this.loadedMorePages}`)
         if (!loadMoreEpisodesUrl) {
             return new Promise((resolve) => resolve(content));
         }

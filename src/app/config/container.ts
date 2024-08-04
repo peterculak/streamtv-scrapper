@@ -45,7 +45,7 @@ container.bind<SeriesServiceInterface>(CONSTANTS.JOJ_SERIES).to(SeriesService);
 container.bind<SeriesServiceInterface>(CONSTANTS.JOJ_NEWS_SERIES).to(NewsSeriesService);
 container.bind<ExtractorServiceInterface>(CONSTANTS.JOJ_EXTRACTOR).to(Extractor);
 container.bind<Pino.Logger>(CONSTANTS.PINO_LOGGER).toConstantValue(pino);
-container.bind<CheerioAPI>(CONSTANTS.CHEERIO).toConstantValue(cheerio);
+container.bind<typeof CheerioAPI>(CONSTANTS.CHEERIO).toConstantValue(cheerio);
 container.bind<Underscore.UnderscoreStatic>(CONSTANTS.UNDERSCORE).toConstantValue(_);
 container.bind<LoggerInterface>(CONSTANTS.LOGGER).to(Logger);
 container.bind<ClientInterface>(CONSTANTS.CLIENT).to(Client);
@@ -54,8 +54,14 @@ container.bind<SeriesServiceStrategyInterface>(CONSTANTS.JOJ_SERIES_STRATEGY).to
 container.bind<TVArchiveCompilerInterface>(CONSTANTS.JOJ_ARCHIVE_COMPILER).to(TVArchiveCompiler);
 container.bind<Slug>(CONSTANTS.SLUGS).to(Slug);
 
-const getConfig = (configYml: string|undefined) =>
-    configYml ? Config.fromYml(yaml.safeLoad(fs.readFileSync(configYml))) : new Config();
+const getConfig = (configYml: string|undefined) => {
+    if (!process.env.STREAM_TV_APP_CONFIG){
+        throw new Error(`STREAM_TV_APP_CONFIG not set in .env`)
+    }
+    const loadedYml = yaml.safeLoad(fs.readFileSync(configYml))
+    return loadedYml ? Config.fromYml(loadedYml as ConfigInterface) : new Config();
+}
+
 const config: ConfigInterface = getConfig(process.env.STREAM_TV_APP_CONFIG);
 
 container.bind<ConfigInterface>(CONSTANTS.CONFIG).toConstantValue(config);

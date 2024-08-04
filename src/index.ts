@@ -62,7 +62,7 @@ switch (commander.action) {
     case 'shows':
         const showsConfig = config.shows;
         if (showsConfig) {
-            showsConfig.map((c: Show) => compiler.process(ShowsRequest.fromConfig(c)));
+            showsConfig.map((c: Show) => compiler.process(ShowsRequest.fromConfig(c, commander)));
         }
         break;
     case 'encrypt':

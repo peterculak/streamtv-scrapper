@@ -109,7 +109,7 @@ class ArchiveService implements ArchiveServiceInterface {
                 const programJsonArchive = `${this.cacheDir(host.name)}/${slug}/${slug}.json`;
 
                 this.logger.debug(`Encrypting ${programJsonArchive}`);
-                const encryptedSlug = uuidv4();
+                const encryptedSlug = `${uuidv4()}.json`;
 
                 this.filesystem.readFile(programJsonArchive).then((file: FileInterface) => {
                     const encrypted = this.encrypt(file.content, password);
@@ -126,7 +126,7 @@ class ArchiveService implements ArchiveServiceInterface {
                 return item;
             });
 
-            const encryptedArchiveFilename = uuidv4();
+            const encryptedArchiveFilename = `${uuidv4()}.json`;
             this.logger.info(`Encrypted archive ${this.cacheDir(host.name)}/${encryptedArchiveFilename}`);
 
             return this.filesystem.writeFile(this.cacheDir(host.name), encryptedArchiveFilename, this.encrypt(JSON.stringify(filtered), password))
@@ -174,7 +174,8 @@ class ArchiveService implements ArchiveServiceInterface {
     }
 
     private updateChannelsIndex(host: Host, filename: string, password: string) {
-        const channels = `${this._cacheDirBase}/channels`;
+        const channelsFilename = 'channels.json'
+        const channels = `${this._cacheDirBase}/${channelsFilename}`;
         if (this.filesystem.existsSync(channels)) {
             return this.filesystem.readFile(channels).then((file: FileInterface) => {
                 let channels = {} as any;
@@ -187,14 +188,14 @@ class ArchiveService implements ArchiveServiceInterface {
                 channels[host.name] = {};
                 channels[host.name].datafile = filename;
                 channels[host.name].image = host.image;
-                return this.filesystem.writeFile(this._cacheDirBase, 'channels', this.encrypt(JSON.stringify(channels), password));
+                return this.filesystem.writeFile(this._cacheDirBase, channelsFilename, this.encrypt(JSON.stringify(channels), password));
             })
         } else {
             let channels = {} as any;
             channels[host.name] = {};
             channels[host.name].datafile = filename;
             channels[host.name].image = host.image;
-            return this.filesystem.writeFile(this._cacheDirBase, 'channels', this.encrypt(JSON.stringify(channels), password));
+            return this.filesystem.writeFile(this._cacheDirBase, channelsFilename, this.encrypt(JSON.stringify(channels), password));
         }
     }
 
